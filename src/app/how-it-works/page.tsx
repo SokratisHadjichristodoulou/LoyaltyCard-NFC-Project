@@ -46,11 +46,11 @@ export default async function HowItWorksPage({ searchParams }: Props) {
               className="rise-in relative grid grid-cols-[auto_1fr] gap-x-5 rounded-[1.5rem] border border-line bg-crema/70 p-5"
               style={{ ["--delay" as string]: `${i * 120}ms` }}
             >
-              <span className="flex size-14 items-center justify-center rounded-full bg-espresso text-crema">
+              <span className="flex size-14 items-center justify-center rounded-full bg-espresso text-gold-light ring-2 ring-gold/45 ring-offset-2 ring-offset-crema">
                 <Icon className="size-8" />
               </span>
               <div>
-                <p className="font-display text-sm text-caramel-ink italic tabular">0{i + 1}</p>
+                <p className="font-display text-sm text-gold-ink italic tabular">0{i + 1}</p>
                 <h2 className="font-display text-xl leading-tight font-medium">{step.title}</h2>
                 <p className="mt-1 text-[0.95rem] leading-relaxed text-roast">{step.body}</p>
               </div>

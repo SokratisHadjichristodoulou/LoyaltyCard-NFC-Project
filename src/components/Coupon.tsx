@@ -23,15 +23,17 @@ export function Coupon({ coupon, t }: { coupon: CouponData; t: Translator }) {
     <article aria-labelledby="coupon-title" className="relative">
       {/* Top half: the offer */}
       <div className="relative overflow-hidden rounded-t-[1.75rem] bg-espresso px-6 pt-6 pb-8 text-crema">
-        <span aria-hidden className="steam absolute top-5 right-6 text-caramel">
+        {/* Thin gold frame, echoing the ring around the logo */}
+        <span aria-hidden className="absolute inset-x-2.5 top-2.5 -bottom-px rounded-t-[1.35rem] border border-b-0 border-gold/40" />
+        <span aria-hidden className="steam absolute top-5 right-6 text-gold">
           <svg viewBox="0 0 40 30" className="h-8 w-10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
             <path d="M10 26c-4-5 4-8 0-14" />
             <path d="M20 26c-4-5 4-8 0-14" />
             <path d="M30 26c-4-5 4-8 0-14" />
           </svg>
         </span>
-        <p className="text-[0.7rem] font-semibold tracking-[0.28em] text-caramel uppercase">{t("coupon.eyebrow")}</p>
-        <h1 id="coupon-title" className="mt-2 font-display text-[2.75rem] leading-[0.95] font-medium">
+        <p className="text-[0.7rem] font-semibold tracking-[0.28em] text-gold uppercase">{t("coupon.eyebrow")}</p>
+        <h1 id="coupon-title" className="mt-2 font-display text-[2.75rem] leading-[0.95] font-semibold text-gold-light italic">
           {t("coupon.title")}
         </h1>
         <p className="mt-3 max-w-[26ch] text-[0.95rem] leading-relaxed text-crema/80">{t("coupon.subtitle")}</p>
@@ -45,7 +47,7 @@ export function Coupon({ coupon, t }: { coupon: CouponData; t: Translator }) {
       </div>
 
       {/* Bottom half: the proof */}
-      <div className="rounded-b-[1.75rem] border border-t-0 border-line bg-crema px-6 pt-7 pb-6 shadow-[0_18px_40px_-24px_rgb(43_27_19/0.45)]">
+      <div className="rounded-b-[1.75rem] border border-t-0 border-line bg-crema px-6 pt-7 pb-6 shadow-[0_18px_40px_-24px_rgb(58_22_9/0.45)]">
         <div className="relative mx-auto w-fit">
           <div className={`rounded-2xl bg-white p-3 shadow-sm ring-1 ring-line ${inactive ? "opacity-35 grayscale" : ""}`}>
             <PlaceholderQR
@@ -99,7 +101,7 @@ export function Coupon({ coupon, t }: { coupon: CouponData; t: Translator }) {
         </dl>
 
         <p className="mt-5 flex gap-2.5 rounded-xl bg-foam px-4 py-3 text-sm leading-relaxed text-roast">
-          <CupGlyph className="mt-0.5 size-5 shrink-0 text-caramel-ink" />
+          <CupGlyph className="mt-0.5 size-5 shrink-0 text-gold-ink" />
           {coupon.status === "valid"
             ? t("coupon.showStaff")
             : coupon.status === "used"

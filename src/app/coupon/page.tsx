@@ -19,7 +19,7 @@ export default async function CouponPage({ searchParams }: Props) {
         <Coupon coupon={card.coupon} t={t} />
       ) : (
         <div className="rounded-[1.75rem] border border-dashed border-line px-6 py-10 text-center">
-          <CupGlyph className="mx-auto size-14 text-caramel" />
+          <CupGlyph className="mx-auto size-14 text-gold" />
           <h1 className="mt-4 font-display text-3xl font-medium">{t("coupon.emptyTitle")}</h1>
           <p className="mx-auto mt-2 max-w-[28ch] text-roast">
             {t.plural("coupon.emptyBody", { count: STAMP_GOAL - card.stamps })}

@@ -16,7 +16,7 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
     <section aria-labelledby="card-heading" className="relative">
       <StampDefs />
       <div
-        className={`relative overflow-hidden rounded-[1.75rem] border border-line bg-crema shadow-[0_1px_0_#fff_inset,0_18px_40px_-24px_rgb(43_27_19/0.45),0_2px_6px_-2px_rgb(43_27_19/0.12)] ${
+        className={`relative overflow-hidden rounded-[1.75rem] border border-line bg-crema shadow-[0_1px_0_#fff_inset,0_18px_40px_-24px_rgb(58_22_9/0.45),0_2px_6px_-2px_rgb(58_22_9/0.12)] ${
           newestIndex >= 0 ? "card-thud" : ""
         }`}
       >
@@ -26,7 +26,7 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
 
         <div className="flex items-end justify-between px-6 pt-5 pb-4">
           <div>
-            <h2 id="card-heading" className="text-[0.7rem] font-semibold tracking-[0.28em] text-caramel-ink uppercase">
+            <h2 id="card-heading" className="text-[0.7rem] font-semibold tracking-[0.28em] text-gold-ink uppercase">
               {t("card.eyebrow")}
             </h2>
             <p className="sr-only">{t("card.progressLabel", { count: filled, goal: STAMP_GOAL })}</p>
@@ -40,7 +40,7 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
           </p>
         </div>
 
-        <div aria-hidden className="mx-5 border-t-2 border-dotted border-line" />
+        <div aria-hidden className="mx-5 border-t-2 border-dotted border-gold/50" />
 
         <ol className="grid grid-cols-5 gap-x-2.5 gap-y-3 px-5 pt-5 pb-4 min-[400px]:gap-x-3.5">
           {Array.from({ length: STAMP_GOAL }, (_, i) => {
@@ -57,7 +57,7 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
                 {isFilled ? (
                   <StampMark ringText={t("card.stampText")} free={isFree} />
                 ) : isFree ? (
-                  <span aria-hidden className="flex size-full flex-col items-center justify-center rounded-full border-[1.5px] border-dashed border-caramel bg-foam/70 text-caramel-ink">
+                  <span aria-hidden className="flex size-full flex-col items-center justify-center rounded-full border-[1.5px] border-dashed border-gold bg-foam/70 text-gold-ink">
                     <CupGlyph className="size-[46%]" />
                     <span className="mt-px text-[clamp(0.4rem,1.7vw,0.52rem)] font-bold tracking-[0.06em] uppercase min-[400px]:tracking-[0.12em]">{t("card.freeSlot")}</span>
                   </span>
