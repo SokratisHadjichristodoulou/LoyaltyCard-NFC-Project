@@ -23,14 +23,21 @@ export function Footer({ t, signedIn = false }: { t: Translator; signedIn?: bool
           <span className="sr-only"> (@coffeepausecyprus)</span>
         </span>
       </a>
-      {signedIn && (
-        <Link
-          href="/logout"
-          className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-muted underline-offset-4 hover:text-espresso hover:underline"
-        >
-          {t("header.signOut")}
+      <nav aria-label={t("footer.name")} className="flex flex-wrap items-center justify-center gap-x-1 text-sm text-muted">
+        <Link href="/privacy" className="inline-flex min-h-11 items-center rounded-full px-3 font-medium underline-offset-4 hover:text-espresso hover:underline">
+          {t("footer.privacy")}
         </Link>
-      )}
+        {signedIn && (
+          <>
+            <Link href="/account" className="inline-flex min-h-11 items-center rounded-full px-3 font-medium underline-offset-4 hover:text-espresso hover:underline">
+              {t("footer.account")}
+            </Link>
+            <Link href="/logout" className="inline-flex min-h-11 items-center rounded-full px-3 font-medium underline-offset-4 hover:text-espresso hover:underline">
+              {t("header.signOut")}
+            </Link>
+          </>
+        )}
+      </nav>
     </footer>
   );
 }

@@ -80,7 +80,9 @@
   },
   "footer": {
     "name": "Coffee Pause Cyprus",
-    "instagram": "Follow us on Instagram"
+    "instagram": "Follow us on Instagram",
+    "privacy": "Privacy",
+    "account": "My account"
   },
   "preview": {
     "label": "Preview"
@@ -269,5 +271,81 @@
       "not_configured": "Stamps aren't available right now.",
       "back": "Back to my card"
     }
+  },
+  "privacy": {
+    "title": "Privacy",
+    "intro": "What data we keep for the stamp card, why, and how you control it.",
+    "missing": "[to be completed]",
+    "lastUpdated": "Last updated: {date}",
+    "who": {
+      "title": "Who we are",
+      "body": "{name}, {address}, is responsible for your data. For anything about your data, email us at {email}."
+    },
+    "what": {
+      "title": "What we keep",
+      "items": [
+        "Your email, so you can sign in.",
+        "Your name, only if you add it.",
+        "Your preferred language.",
+        "Your stamps: when you got them and from which tag.",
+        "Your coupons: the code, when each was issued, when it expires and when it was redeemed."
+      ],
+      "none": "We don't keep your phone number, address or payment details, and we don't send marketing emails."
+    },
+    "why": {
+      "title": "Why",
+      "body": "To run the stamp card you signed up for (performing a contract, GDPR Article 6(1)(b)) and to prevent misuse such as double stamps or copied coupons (legitimate interest, GDPR Article 6(1)(f))."
+    },
+    "cookies": {
+      "title": "Cookies",
+      "body": "We only use the cookies the site needs to work. We don't use analytics or advertising cookies, so we don't ask for consent.",
+      "items": [
+        "sb-…: keeps you signed in.",
+        "cp_lang: the language you chose.",
+        "cp_login_email: your email for 15 minutes, for the \"Check your email\" screen.",
+        "cp_pending_tap: a stamp waiting for you to sign in, for up to 15 minutes."
+      ]
+    },
+    "who_sees": {
+      "title": "Who sees your data",
+      "body": "The cafe owner sees your email, stamps and coupons. Staff only see the coupon they scan. The data is stored for us by Supabase (database and sign-in), the service that sends sign-in emails, and the company that hosts the site. We don't sell your data or give it to anyone else."
+    },
+    "how_long": {
+      "title": "How long",
+      "body": "For as long as you have an account. When you delete it, we immediately erase your email, name, stamps and coupons. Hosting providers may keep technical logs (such as IP addresses) for a few days for security."
+    },
+    "rights": {
+      "title": "Your rights",
+      "body": "You can see and download your data, correct your name and delete your account, all from \"My account\". For anything else, email us. If you think we haven't handled your data properly, you can contact the Commissioner for Personal Data Protection of Cyprus.",
+      "account": "Go to my account",
+      "authority": "www.dataprotection.gov.cy"
+    }
+  },
+  "account": {
+    "title": "My account",
+    "signedInAs": "Signed in as {email}",
+    "name": {
+      "title": "Your name",
+      "help": "Optional. You see it in the greeting and the cafe sees it.",
+      "label": "Name",
+      "save": "Save",
+      "saved": "Saved.",
+      "tooLong": "Up to 80 characters."
+    },
+    "data": {
+      "title": "Your data",
+      "body": "Download everything we keep about you in one file.",
+      "download": "Download my data"
+    },
+    "delete": {
+      "title": "Delete account",
+      "body": "Permanently erases your email, name, stamps and coupons. This can't be undone.",
+      "confirm": "I understand I will lose my stamps and coupons.",
+      "button": "Delete my account",
+      "mustConfirm": "Tick the box to confirm.",
+      "failed": "It wasn't deleted. Try again or email us.",
+      "staff": "Staff and admin accounts are removed by the cafe owner."
+    },
+    "deleted": "Your account and all its data were deleted."
   }
 }
