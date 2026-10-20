@@ -1,7 +1,6 @@
 import type { Translator } from "@/i18n/translate";
 import { intlLocale, type Locale } from "@/i18n/config";
 import type { Coupon as CouponData } from "@/lib/card";
-import { PlaceholderQR } from "./PlaceholderQR";
 import { CupGlyph } from "./Stamp";
 
 const statusStyle = {
@@ -10,7 +9,7 @@ const statusStyle = {
   expired: "bg-berry-soft text-berry",
 } as const;
 
-export function Coupon({ coupon, t }: { coupon: CouponData; t: Translator }) {
+export function Coupon({ coupon, qrSvg, t }: { coupon: CouponData; qrSvg: string; t: Translator }) {
   const fmt = new Intl.DateTimeFormat(intlLocale[t.locale as Locale], {
     day: "numeric",
     month: "long",
@@ -50,10 +49,11 @@ export function Coupon({ coupon, t }: { coupon: CouponData; t: Translator }) {
       <div className="rounded-b-[1.75rem] border border-t-0 border-line bg-crema px-6 pt-7 pb-6 shadow-[0_18px_40px_-24px_rgb(58_22_9/0.45)]">
         <div className="relative mx-auto w-fit">
           <div className={`rounded-2xl bg-white p-3 shadow-sm ring-1 ring-line ${inactive ? "opacity-35 grayscale" : ""}`}>
-            <PlaceholderQR
-              code={coupon.code}
-              label={t("coupon.qrAlt", { code: coupon.code })}
-              className="size-48 text-espresso"
+            <div
+              role="img"
+              aria-label={t("coupon.qrAlt", { code: coupon.code })}
+              className="size-48 [&>svg]:size-full"
+              dangerouslySetInnerHTML={{ __html: qrSvg }}
             />
           </div>
           {inactive && (
@@ -66,9 +66,6 @@ export function Coupon({ coupon, t }: { coupon: CouponData; t: Translator }) {
               {t(`coupon.status.${coupon.status}`)}
             </span>
           )}
-          <p className="mt-2 text-center text-[0.65rem] font-semibold tracking-[0.2em] text-muted uppercase">
-            {t("coupon.qrPlaceholder")}
-          </p>
         </div>
 
         <p className="mt-5 text-center text-[0.7rem] font-semibold tracking-[0.24em] text-muted uppercase">

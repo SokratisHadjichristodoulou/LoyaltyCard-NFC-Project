@@ -5,6 +5,11 @@ export function isMockMode() {
   return process.env.MOCK_DATA === "1" && process.env.NODE_ENV !== "production";
 }
 
+/** Dev-only "add a test stamp" button, for trying the flow without NFC tags. */
+export function isDevStampEnabled() {
+  return process.env.DEV_STAMPS === "1" && process.env.NODE_ENV !== "production";
+}
+
 export function isSupabaseConfigured() {
   return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 }
