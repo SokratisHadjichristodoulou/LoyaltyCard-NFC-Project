@@ -97,17 +97,25 @@ In **Authentication → URL Configuration**:
 - **Site URL**: the production URL, e.g. `https://card.example.com`
 - **Redirect URLs**: add `http://localhost:3000/**` and `https://card.example.com/**`
 
-In **Authentication → Emails → Magic Link**, change the link in the template so
-it also works when the email is opened on a different device or browser:
+### 3b. Sign-in emails (Greek and English)
 
-```html
-<a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Sign in</a>
-```
+Supabase sends two emails: **Confirm signup** to a new customer and **Magic
+Link** to a returning one. Replace both in **Authentication → Emails**:
 
-The default template also works, but only in the same browser that asked for
-the link. Supabase's built-in email sender only allows a few emails per hour;
-set up a custom SMTP provider under **Authentication → Emails** before going
-live.
+| Template       | Subject                                                | Body (paste the whole file)            |
+| -------------- | ------------------------------------------------------ | -------------------------------------- |
+| Confirm signup | `Coffee Pause · Άνοιξε την κάρτα σου / Open your card` | `supabase/templates/confirmation.html` |
+| Magic Link     | `Coffee Pause · Σύνδεση / Sign in`                     | `supabase/templates/magic-link.html`   |
+
+Each email is in the customer's language (Greek unless they chose English,
+which the site saves for them). Its button links to
+`/auth/callback?next=…&token_hash=…&type=email`, so it works on any device and
+returns the customer to where they were, including a waiting NFC stamp. For
+that, the site's address must be in the Redirect URLs above. The logo is
+loaded from `<Site URL>/logo.png`, so the Site URL must be the live address.
+
+Supabase's built-in email sender only allows a few emails per hour; set up a
+custom SMTP provider under **Authentication → Emails** before going live.
 
 ### 4. Make yourself admin
 
@@ -406,8 +414,23 @@ src/
 supabase/
   migrations/           schema and RLS, in order
   seed.sql              the cafe and its rules
+  templates/            sign-in emails (Greek and English) to paste into Supabase
   tests/                RLS and stamping tests, helpers, plain-Postgres stand-in
 ```
+
+## Releasing a change
+
+The code and the Supabase project change separately, so do these in order
+every time `main` gets new work:
+
+1. **Database first**: if the pull request adds files to `supabase/migrations/`,
+   run `npx supabase db push` (old migrations are skipped, new ones run).
+2. **Settings**: add any new environment variables the pull request lists
+   (`.env.local` locally, and on the host).
+3. **Then deploy** the new `main`.
+
+New code against an old database fails (e.g. stamping or the admin pages).
+Each pull request ends with an "After merge" list of exactly these steps.
 
 ## Branch workflow
 
