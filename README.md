@@ -16,7 +16,7 @@ from the main website. Search engines are blocked by `public/robots.txt`, a
 - Next.js (App Router) + TypeScript
 - Tailwind CSS
 - Supabase: Postgres with Row Level Security, and Auth (email magic link)
-- Host-agnostic: deploys to Vercel or Cloudflare (via `@opennextjs/cloudflare`)
+- Host-agnostic: deploys to Vercel or Cloudflare Workers (via `@opennextjs/cloudflare`), see Deploying
 
 ## Run locally
 
@@ -53,6 +53,7 @@ npm start         # serve the production build
 npm run lint      # typecheck
 npm test          # unit tests (NFC crypto, waiting-tap cookie, migration list)
 npm run db:check  # is the Supabase project up to date with the code?
+npm run cf:preview # the Cloudflare Workers build, locally (see Deploying)
 npm run test:db   # migrations + database tests on a throwaway Postgres (see below)
 ```
 
@@ -378,6 +379,8 @@ missing from `en.json` fails the typecheck.
 ```
 public/                 logo.png, robots.txt (disallow all)
 references/             design screenshots (not deployed)
+wrangler.jsonc          Cloudflare Workers config (ignored by Vercel)
+open-next.config.ts     Cloudflare adapter config
 scripts/test-db.sh      migrations + database tests on a throwaway Postgres
 scripts/nfc-keys.ts     prints one tag's keys and SDM settings (npm run nfc:keys)
 scripts/nfc-tap-url.ts  makes a test tap URL (npm run nfc:url)
@@ -421,6 +424,78 @@ supabase/
   templates/            sign-in emails (Greek and English) to paste into Supabase
   tests/                RLS and stamping tests, helpers, plain-Postgres stand-in
 ```
+
+## Deploying
+
+The same code runs on Vercel or on Cloudflare Workers. Both are set up and
+tested; pick one.
+
+| | Vercel | Cloudflare Workers |
+| --- | --- | --- |
+| Setup | Import the GitHub repo; nothing else | `wrangler.jsonc` and `open-next.config.ts` are in the repo |
+| Deploys | Every push to `main`, automatically | `npm run cf:deploy` (or connect Workers Builds to GitHub) |
+| Price for a business | The free Hobby plan is for non-commercial use only, so Pro (paid) | The free plan allows commercial use |
+| Caveat | None known | The adapter marks Next.js "proxy" (our `src/proxy.ts`) as experimental on Workers. Every flow passed in Cloudflare's local runtime, but it is less proven |
+
+### Before either
+
+1. Do the **Supabase setup** above, including the email templates, and run
+   `npm run db:check`.
+2. Choose the subdomain, e.g. `card.coffeepause.com.cy`.
+3. Have these values ready: `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `NEXT_PUBLIC_SITE_URL` (`https://card.coffeepause.com.cy`), `NFC_TAG_SECRET`,
+   and `CAFE_SLUG` if not the default. Don't set `MOCK_DATA` or `DEV_STAMPS`.
+   `NEXT_PUBLIC_*` values are built into the app, so they must be set before
+   the build.
+
+### Vercel
+
+1. vercel.com → **Add New → Project** → import this GitHub repo. It detects
+   Next.js.
+2. **Settings → Environment Variables**: add the values above for
+   **Production**. Pull-request previews would use the same database, so
+   either leave **Preview** without them or point Preview at a separate
+   Supabase project.
+3. **Settings → Functions → Region**: choose the one nearest your Supabase
+   project's region (e.g. Frankfurt if Supabase is in eu-central-1).
+4. Deploy, then **Settings → Domains**: add the subdomain and create the DNS
+   record Vercel shows (usually a CNAME) at your domain registrar.
+
+### Cloudflare Workers
+
+The domain's DNS must be on Cloudflare to attach a custom domain.
+
+1. `npx wrangler login`
+2. Server-only values, as Worker secrets (asked for one at a time):
+   ```bash
+   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+   npx wrangler secret put NFC_TAG_SECRET
+   ```
+   (and `CAFE_SLUG` the same way, if you use it)
+3. Put the `NEXT_PUBLIC_*` values in `.env.local`, then build and deploy:
+   `npm run cf:deploy`.
+4. Cloudflare dashboard → **Workers & Pages → coffee-pause-card → Settings →
+   Domains & Routes → Add → Custom domain**: the subdomain.
+
+To try the Workers build locally first, put the same values in `.dev.vars`
+(git-ignored) and run `npm run cf:preview` (http://localhost:8787). CI builds
+the Workers bundle on every pull request.
+
+### After the first deploy
+
+1. Supabase → Authentication → URL Configuration: **Site URL** = the live
+   address, and add `https://card.…/**` to **Redirect URLs**.
+2. Open `https://card.…/api/health`: it must say `{"status":"ok"}`. Point an
+   uptime monitor at it.
+3. Check `https://card.…/robots.txt` says `Disallow: /`.
+4. Sign in with your own email, make yourself admin, open `/admin`.
+5. When the NFC tags arrive, program one and tap it with an iPhone and an
+   Android phone.
+
+Every response carries `noindex` and security headers (no framing, no MIME
+sniffing, strict referrer, camera allowed only for the staff scanner, HTTPS
+only).
 
 ## Releasing a change
 
@@ -469,7 +544,8 @@ once it is tested:
 | 6     | `feat/admin-dashboard`   | `/admin` stats, customers, tags, export            |
 
 Every pull request runs CI (`.github/workflows/ci.yml`): typecheck, unit
-tests, production build, and the database migrations and tests. Merge only when
+tests, production build, the Cloudflare Workers build, and the database
+migrations and tests. Merge only when
 it is green.
 
 Commit messages use a short prefix: `feat:`, `fix:`, `chore:`, `docs:`,
