@@ -6,6 +6,8 @@ import { LangToggle } from "./LangToggle";
 import { Footer } from "./Footer";
 import { PreviewBar } from "./PreviewBar";
 import { withState } from "./href";
+import { getUser } from "@/lib/auth";
+import { isMockMode } from "@/lib/env";
 
 type Page = "card" | "coupon" | "how";
 
@@ -15,17 +17,20 @@ const pages: { id: Page; path: string }[] = [
   { id: "how", path: "/how-it-works" },
 ];
 
-export function Shell({
+export async function Shell({
   t,
   active,
   state,
   children,
 }: {
   t: Translator;
-  active: Page;
+  /** Highlighted nav tab; omitted on pages outside the main nav (login etc.). */
+  active?: Page;
   state?: string;
   children: React.ReactNode;
 }) {
+  const preview = isMockMode();
+  const signedIn = !preview && !!(await getUser());
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-4 sm:max-w-lg">
       <header className="flex items-center justify-between gap-4 pt-5 pb-3">
@@ -76,8 +81,8 @@ export function Shell({
         {children}
       </main>
 
-      <Footer t={t} />
-      <PreviewBar t={t} active={active} state={state} />
+      <Footer t={t} signedIn={signedIn} />
+      {preview && <PreviewBar t={t} active={active ?? "card"} state={state} />}
     </div>
   );
 }

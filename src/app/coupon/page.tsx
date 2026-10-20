@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getT } from "@/i18n/server";
-import { STAMP_GOAL, getCard } from "@/lib/mock-data";
+import { getCardView } from "@/lib/card-data";
 import { Shell } from "@/components/Shell";
 import { Coupon } from "@/components/Coupon";
 import { CupGlyph } from "@/components/Stamp";
@@ -9,9 +9,8 @@ import { withState } from "@/components/href";
 type Props = { searchParams: Promise<{ state?: string }> };
 
 export default async function CouponPage({ searchParams }: Props) {
-  const { state } = await searchParams;
   const t = await getT();
-  const card = getCard(state);
+  const { card, state } = await getCardView((await searchParams).state, "/coupon");
 
   return (
     <Shell t={t} active="coupon" state={state}>
@@ -22,7 +21,7 @@ export default async function CouponPage({ searchParams }: Props) {
           <CupGlyph className="mx-auto size-14 text-gold" />
           <h1 className="mt-4 font-display text-3xl font-medium">{t("coupon.emptyTitle")}</h1>
           <p className="mx-auto mt-2 max-w-[28ch] text-roast">
-            {t.plural("coupon.emptyBody", { count: STAMP_GOAL - card.stamps })}
+            {t.plural("coupon.emptyBody", { count: Math.max(card.goal - card.stamps, 0) })}
           </p>
           <Link
             href={withState("/", state)}

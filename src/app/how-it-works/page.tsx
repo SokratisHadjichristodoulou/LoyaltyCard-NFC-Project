@@ -1,5 +1,6 @@
 import { getT } from "@/i18n/server";
 import { Shell } from "@/components/Shell";
+import { isMockMode } from "@/lib/env";
 import { CupGlyph } from "@/components/Stamp";
 
 type Props = { searchParams: Promise<{ state?: string }> };
@@ -33,7 +34,7 @@ export default async function HowItWorksPage({ searchParams }: Props) {
   const steps = t.messages.how.steps;
 
   return (
-    <Shell t={t} active="how" state={state}>
+    <Shell t={t} active="how" state={isMockMode() ? state : undefined}>
       <h1 className="font-display text-[2.4rem] leading-none font-medium tracking-tight">{t("how.title")}</h1>
       <p className="mt-3 text-roast">{t("how.intro")}</p>
 

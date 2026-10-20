@@ -11,7 +11,8 @@
       "card": "My card",
       "coupon": "Coupon",
       "how": "How it works"
-    }
+    },
+    "signOut": "Sign out"
   },
   "greeting": {
     "morning": "Good morning",
@@ -83,5 +84,48 @@
   },
   "preview": {
     "label": "Preview"
+  },
+  "login": {
+    "title": "Sign in",
+    "intro": "Enter your email and we'll send you a sign-in link. No password needed.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "maria@example.com",
+    "submit": "Email me a link",
+    "privacy": "We only use your email for your stamp card.",
+    "signedOut": "You're signed out. See you at your next coffee!",
+    "errors": {
+      "invalid_email": "That doesn't look like a valid email. Check it and try again.",
+      "rate_limited": "We've sent several links already. Wait a few minutes and try again.",
+      "send_failed": "We couldn't send the email. Try again in a moment.",
+      "link_invalid": "That link has expired or was already used. Ask for a new one below.",
+      "not_configured": "Sign-in isn't available right now."
+    }
+  },
+  "checkEmail": {
+    "title": "Check your email",
+    "body": "We sent a sign-in link to {email}. Open it on this phone to see your card.",
+    "bodyNoEmail": "We sent a sign-in link to your email. Open it on this phone to see your card.",
+    "tipSpam": "Can't find it? Check your spam folder.",
+    "tipExpiry": "The link expires in 1 hour and works once.",
+    "retry": "Use a different email"
+  },
+  "logout": {
+    "title": "Sign out",
+    "body": "Sign out on this phone? Your stamps stay saved.",
+    "confirm": "Sign out",
+    "cancel": "Back to my card"
+  },
+  "notAllowed": {
+    "title": "You don't have access here",
+    "body": "This page is for cafe staff only. If you work here, ask the admin to give you access.",
+    "back": "Back to my card"
+  },
+  "staff": {
+    "title": "Staff",
+    "placeholder": "The coupon scanner comes in a later step."
+  },
+  "admin": {
+    "title": "Admin",
+    "placeholder": "The admin dashboard comes in a later step."
   }
 }

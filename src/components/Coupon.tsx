@@ -1,6 +1,6 @@
 import type { Translator } from "@/i18n/translate";
 import { intlLocale, type Locale } from "@/i18n/config";
-import type { Coupon as CouponData } from "@/lib/mock-data";
+import type { Coupon as CouponData } from "@/lib/card";
 import { PlaceholderQR } from "./PlaceholderQR";
 import { CupGlyph } from "./Stamp";
 
@@ -74,7 +74,7 @@ export function Coupon({ coupon, t }: { coupon: CouponData; t: Translator }) {
         <p className="mt-5 text-center text-[0.7rem] font-semibold tracking-[0.24em] text-muted uppercase">
           {t("coupon.codeLabel")}
         </p>
-        <p className="mt-1 text-center font-mono text-2xl font-semibold tracking-[0.12em] tabular select-all">
+        <p className="mt-1 text-center font-mono text-[clamp(1rem,4.6vw,1.4rem)] font-semibold tracking-[0.05em] whitespace-nowrap tabular select-all">
           {coupon.code}
         </p>
 
