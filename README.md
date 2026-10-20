@@ -34,13 +34,24 @@ To look at the screens without a database, use the mock data instead:
 MOCK_DATA=1 npm run dev
 ```
 
+To try stamping and coupons on your own Supabase project before the NFC tags
+arrive, sign in and use the test button under the card:
+
+```bash
+DEV_STAMPS=1 npm run dev
+```
+
+The 3-minute cooldown still applies. For quick testing, lower it with
+`update public.cafes set stamp_cooldown_seconds = 0;` and set it back to 180
+afterwards.
+
 Other scripts:
 
 ```bash
 npm run build     # production build
 npm start         # serve the production build
 npm run lint      # typecheck
-npm run test:db   # migrations + RLS tests on a throwaway Postgres (see below)
+npm run test:db   # migrations + database tests on a throwaway Postgres (see below)
 ```
 
 ## Supabase setup
@@ -141,10 +152,28 @@ RLS is on for every table.
 - **Admins** read everything that belongs to their cafe.
 - **Signed-out visitors** can read cafe info only.
 
-### RLS tests
+### Stamps and coupons
 
-`supabase/tests/rls.test.sql` proves these rules: it signs in as different
-customers, staff and admins and checks what each can read and write.
+All stamping goes through one database function, `record_stamp`, which only
+the server (service role) can call. In one transaction it:
+
+1. creates the customer's card if needed,
+2. refuses the stamp if the last one was less than `stamp_cooldown_seconds`
+   ago (and says how long to wait),
+3. logs the stamp in `stamps`,
+4. at `stamps_required`, issues a coupon valid for `coupon_valid_days` and
+   starts the card again.
+
+The coupon page shows a real QR code. It opens `/staff?code=<code>`, where the
+staff scanner (next step) looks the coupon up and redeems it once. The code
+itself is the secret, so the QR needs no extra signing.
+
+### Database tests
+
+`supabase/tests/rls.test.sql` proves the access rules: it signs in as
+different customers, staff and admins and checks what each can read and
+write. `supabase/tests/stamps.test.sql` proves the stamping rules: cooldown,
+coupon at 10, the card starting again, and that only the server can stamp.
 `npm run test:db` runs every migration twice (to prove they are
 re-runnable), then the seed and the tests, on a throwaway database. It runs in
 CI on every pull request.
@@ -219,10 +248,8 @@ missing from `en.json` fails the typecheck.
 
 | What                                              | Comes in                  |
 | ------------------------------------------------- | ------------------------- |
-| Adding stamps: no NFC yet, stamps only change through SQL | `feat/tag-verification` |
-| "Stamp just added" animation after a tap          | `feat/tag-verification`   |
-| Issuing a coupon at 10 stamps, real QR code (the QR is a placeholder) | `feat/customer-coupon` |
-| Staff scanner and redeem API (`/staff` is a placeholder) | `feat/staff-scanner` |
+| NFC tap verification: stamps come from the dev-only test button for now | `feat/tag-verification` |
+| Staff scanner and redeem API (`/staff` is a placeholder; the QR already points at it) | `feat/staff-scanner` |
 | Admin dashboard and export (`/admin` is a placeholder) | `feat/admin-dashboard` |
 | Customer display name: no screen to set it yet, so the greeting has no name | later step |
 | Custom SMTP for sign-in emails                    | before launch             |
@@ -255,14 +282,15 @@ src/
     auth.ts             current user, profile, role checks
     card-data.ts        loads the customer's card (database or mock)
     nfc/                tag signing and verification (later)
-    coupons.ts          coupon rules (later)
+    coupons.ts          coupon QR code
+    stamping.ts         adds a stamp through record_stamp
     mock-data.ts        dev-only preview states
   i18n/                 el.json, en.json
   styles/               global styles
 supabase/
   migrations/           schema and RLS, in order
   seed.sql              the cafe and its rules
-  tests/                RLS tests and the plain-Postgres stand-in
+  tests/                RLS and stamping tests, helpers, plain-Postgres stand-in
 ```
 
 ## Branch workflow
@@ -278,7 +306,7 @@ once it is tested:
 | 1     | `feat/landing-page`      | Front end with mock data: card, coupon, how it works, EL/EN |
 | 2     | `feat/database-auth`     | Supabase schema, RLS, magic-link sign-in, protected areas |
 | 3     | `feat/tag-verification`  | Signed NFC tag URLs, `/tap` route, stamp API       |
-| 4     | `feat/customer-coupon`   | Coupon issuing, real QR codes, expiry              |
+| 4     | `feat/customer-coupon`   | Stamping rules, coupon issuing, real QR codes      |
 | 5     | `feat/staff-scanner`     | `/staff` scanner and redeem API                    |
 | 6     | `feat/admin-dashboard`   | `/admin` stats, customers, tags, export            |
 
@@ -301,8 +329,8 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 | `SUPABASE_SERVICE_ROLE_KEY`      | Supabase service_role / secret key. Server only, never exposed to the browser |
 | `CAFE_SLUG`                      | Which cafe this site serves. Defaults to `coffee-pause-cyprus` |
 | `MOCK_DATA`                      | `1` to preview mock card states on the dev server |
+| `DEV_STAMPS`                     | `1` to show the "Add a test stamp" button on the dev server |
 | `NFC_TAG_SECRET`                 | Signs and verifies NFC tag URLs (later step)      |
-| `COUPON_SIGNING_SECRET`          | Signs coupon QR payloads (later step)             |
 | `TEST_DATABASE_URL`              | Throwaway Postgres for `npm run test:db` (not used by the app) |
 
 `NEXT_PUBLIC_*` values are built into the app, so set them before
