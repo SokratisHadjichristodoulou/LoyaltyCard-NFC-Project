@@ -225,7 +225,9 @@
         "duplicate": "A tag with this UID already exists.",
         "failed": "It wasn't saved. Try again."
       },
-      "saved": "Tag saved."
+      "saved": "Tag saved.",
+      "lastTap": "Last tap {date}",
+      "neverTapped": "Not used yet"
     },
     "settings": {
       "title": "Cafe settings",
@@ -254,5 +256,18 @@
   "dev": {
     "label": "Test · dev only",
     "stamp": "Add a test stamp"
+  },
+  "tap": {
+    "signInToCollect": "Sign in to collect your stamp. It's added as soon as you open the link in the email.",
+    "problem": {
+      "title": "The stamp wasn't added",
+      "invalid": "That tap wasn't recognised. Ask the barista to tap the tag again.",
+      "replayed": "That tap has already been used. A new stamp needs a new tap of the tag.",
+      "unknown_tag": "This tag doesn't belong to Coffee Pause. Ask the barista to use another one.",
+      "inactive": "This tag has been switched off. Ask the barista to use another one.",
+      "expired": "The tap ran out before you finished signing in. Ask the barista to tap the tag again.",
+      "not_configured": "Stamps aren't available right now.",
+      "back": "Back to my card"
+    }
   }
 }
