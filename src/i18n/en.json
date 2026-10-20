@@ -121,8 +121,35 @@
     "back": "Back to my card"
   },
   "staff": {
-    "title": "Staff",
-    "placeholder": "The coupon scanner comes in a later step."
+    "title": "Scan a coupon",
+    "intro": "Scan the customer's QR code. Your phone's own camera works too: the link opens here.",
+    "startCamera": "Open the camera",
+    "stopCamera": "Close the camera",
+    "scanning": "Point at the QR code inside the frame…",
+    "cameraDenied": "Camera access was blocked. Allow it in the browser settings, or type the code.",
+    "cameraUnsupported": "This browser can't scan. Use the phone's camera, or type the code.",
+    "manualLabel": "Or type the code",
+    "manualSubmit": "Check",
+    "notFound": "No coupon with the code {code} at this cafe.",
+    "status": {
+      "valid": "Valid: serve a free coffee",
+      "used": "Already used",
+      "expired": "Expired"
+    },
+    "usedAt": "Used {date}",
+    "expiresOn": "Expires {date}",
+    "expiredOn": "Expired {date}",
+    "redeem": "Redeem free coffee",
+    "redeeming": "Redeeming…",
+    "results": {
+      "redeemed": "Redeemed! Serve the free coffee.",
+      "already_used": "This coupon has already been used.",
+      "expired": "This coupon has expired.",
+      "not_found": "This coupon wasn't found.",
+      "not_allowed": "You're not allowed to redeem coupons.",
+      "error": "Something went wrong. Try again."
+    },
+    "scanAnother": "Scan another coupon"
   },
   "admin": {
     "title": "Admin",
