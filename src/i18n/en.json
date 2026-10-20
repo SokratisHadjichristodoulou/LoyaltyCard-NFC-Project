@@ -353,5 +353,19 @@
       "staff": "Staff and admin accounts are removed by the cafe owner."
     },
     "deleted": "Your account and all its data were deleted."
+  },
+  "errors": {
+    "notFound": {
+      "title": "This page doesn't exist",
+      "body": "The link may be wrong or the page has moved. Your card is right where you left it.",
+      "code": "Error 404"
+    },
+    "server": {
+      "title": "Something went wrong",
+      "body": "It's not your fault. Try again in a moment. Your stamps are safe.",
+      "retry": "Try again",
+      "reference": "Error reference: {id}"
+    },
+    "back": "Back to my card"
   }
 }
