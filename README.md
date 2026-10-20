@@ -36,6 +36,50 @@ npm start       # serve the production build
 npm run lint    # typecheck
 ```
 
+## Preview card states
+
+Until the database is connected, all card data comes from
+`src/lib/mock-data.ts`. Set `ACTIVE_SCENARIO` to one of the states below, or
+add `?state=<name>` to any URL (e.g. `/coupon?state=used`). The dashed
+"Preview" bar at the bottom of each page switches between them too.
+
+| State      | What you see                              |
+| ---------- | ----------------------------------------- |
+| `new`      | Empty card, 0/10                          |
+| `progress` | 4/10, the newest stamp animates in        |
+| `almost`   | 9/10                                      |
+| `complete` | 10/10, celebration, valid coupon          |
+| `used`     | Fresh card (1/10), coupon marked as used  |
+| `expired`  | 2/10, coupon marked as expired            |
+
+## Languages
+
+Greek and English, switched with the EL / EN toggle in the header. The
+default is the browser language, falling back to Greek; an explicit choice is
+saved in the `cp_lang` cookie. All text lives in `src/i18n/el.json` and
+`src/i18n/en.json`. Greek is the reference: a key missing from `en.json`
+fails the typecheck.
+
+## Brand
+
+- Logo: `public/logo.png` (currently a placeholder; replace with the real logo,
+  square, at least 256×256).
+- Colors: tokens at the top of `src/styles/globals.css`. Re-derive them from
+  the real logo when it is added; components only use these tokens.
+- Type: Piazzolla (headings) and Commissioner (text), both with Greek support.
+
+## Mocked for now
+
+| Mocked                                       | Replaced in               |
+| -------------------------------------------- | ------------------------- |
+| Card, customer and coupon data (`mock-data.ts`) | `feat/database-auth`   |
+| Customer identity (always "Μαρία")          | `feat/database-auth`      |
+| "Stamp just added" on page open             | `feat/tag-verification`   |
+| Placeholder, non-scannable QR               | `feat/customer-coupon`    |
+| Coupon status set by hand                   | `feat/staff-scanner`      |
+| Fixed goal and expiry rules                 | `feat/admin-dashboard`    |
+| Preview bar and `?state=` override          | removed with the mock data |
+
 ## Project structure
 
 ```
