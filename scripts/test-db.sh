@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs the migrations (twice, to prove they are re-runnable), the seed and the
-# RLS tests against a throwaway database on a plain Postgres.
+# database tests (supabase/tests/*.test.sql) against a throwaway database on a plain Postgres.
 #
 #   TEST_DATABASE_URL=postgres://postgres@localhost:5432/postgres npm run test:db
 #
@@ -26,6 +26,10 @@ for pass in 1 2; do
 done
 echo "migrations and seed applied twice"
 
-run -f supabase/tests/rls.test.sql 2>&1 | sed -n 's/^.*NOTICE:  //p; /ERROR/p'
-test "${PIPESTATUS[0]}" -eq 0
-echo "all RLS checks passed"
+run -f supabase/tests/helpers.sql
+for t in supabase/tests/*.test.sql; do
+  echo "--- $(basename "$t")"
+  run -f "$t" 2>&1 | sed -n 's/^.*NOTICE:  //p; /ERROR/p'
+  test "${PIPESTATUS[0]}" -eq 0
+done
+echo "all database checks passed"
