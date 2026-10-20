@@ -38,9 +38,9 @@ export const areaRoles: Record<"staff" | "admin", Role[]> = {
  * Server-side check for protected pages (the proxy checks too; this keeps the
  * page safe even if the proxy matcher changes).
  */
-export async function requireRole(area: keyof typeof areaRoles) {
+export async function requireRole(area: keyof typeof areaRoles, returnTo: string = `/${area}`) {
   const profile = await getProfile();
-  if (!profile) redirect(`/login?next=/${area}`);
+  if (!profile) redirect(`/login?next=${encodeURIComponent(returnTo)}`);
   if (!areaRoles[area].includes(profile.role)) redirect("/not-allowed");
   return profile;
 }
