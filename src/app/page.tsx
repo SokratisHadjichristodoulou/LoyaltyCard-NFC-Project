@@ -27,7 +27,7 @@ export default async function HomePage({ searchParams }: Props) {
       <h1 className="mb-6 font-display text-[2.4rem] leading-[1.02] font-medium tracking-tight">
         {t(greetingKey())},
         <br />
-        <span className="text-caramel-ink italic">{card.customerName}.</span>
+        <span className="text-gold-ink italic">{card.customerName}.</span>
       </h1>
 
       <StampCard card={card} t={t} />
@@ -38,7 +38,7 @@ export default async function HomePage({ searchParams }: Props) {
           <p className="mt-1 text-roast">{t("complete.body")}</p>
           <Link
             href={withState("/coupon", state)}
-            className="mt-5 inline-flex min-h-13 items-center justify-center gap-2 rounded-full bg-espresso px-7 text-base font-semibold text-crema shadow-[0_10px_24px_-12px_rgb(43_27_19/0.7)] transition-transform active:scale-[0.98]"
+            className="mt-5 inline-flex min-h-13 items-center justify-center gap-2 rounded-full bg-espresso px-7 text-base font-semibold text-gold-light ring-1 ring-gold/50 ring-inset shadow-[0_10px_24px_-12px_rgb(58_22_9/0.7)] transition-transform active:scale-[0.98]"
           >
             {t("complete.cta")}
             <span aria-hidden>→</span>

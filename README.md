@@ -64,8 +64,9 @@ fails the typecheck.
 
 - Logo: `public/logo.png` (currently a placeholder; replace with the real logo,
   square, at least 256×256).
-- Colors: tokens at the top of `src/styles/globals.css`. Re-derive them from
-  the real logo when it is added; components only use these tokens.
+- Colors: taken from the logo (deep reddish-brown `#3a1609` and warm gold
+  `#d6a24e` on cream). Tokens live at the top of `src/styles/globals.css`;
+  components only use these tokens.
 - Type: Piazzolla (headings) and Commissioner (text), both with Greek support.
 
 ## Mocked for now

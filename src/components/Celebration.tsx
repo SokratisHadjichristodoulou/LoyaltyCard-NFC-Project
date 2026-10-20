@@ -14,7 +14,7 @@ export function Celebration() {
           "--spin": `${(i % 2 ? 1 : -1) * (180 + i * 23)}deg`,
           "--delay": `${1100 + (i % 6) * 40}ms`,
         } as React.CSSProperties;
-        const tone = i % 3 === 0 ? "bg-caramel" : i % 3 === 1 ? "bg-roast" : "bg-ink";
+        const tone = i % 3 === 0 ? "bg-gold" : i % 3 === 1 ? "bg-roast" : "bg-ink";
         return (
           <span
             key={i}
