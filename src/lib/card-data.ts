@@ -17,11 +17,16 @@ export type CardView =
  * (and honours `?state=`); otherwise from the database for the signed-in
  * customer, who is sent to /login when signed out.
  */
-export async function getCardView(stateParam: string | string[] | undefined, returnTo: string): Promise<CardView> {
+export async function getCardView(
+  stateParam: string | string[] | undefined,
+  returnTo: string,
+  { justStamped = false }: { justStamped?: boolean } = {},
+): Promise<CardView> {
   if (isMockMode()) {
     return { source: "mock", card: getMockCard(stateParam), state: getScenarioName(stateParam) };
   }
-  return { source: "db", card: await loadCard(returnTo) };
+  const card = await loadCard(returnTo);
+  return { source: "db", card: { ...card, justStamped: justStamped && card.stamps > 0 } };
 }
 
 const loadCard = cache(async (returnTo: string): Promise<Card> => {

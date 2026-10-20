@@ -71,6 +71,16 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      record_stamp: {
+        Args: { p_cafe_id: string; p_customer_id: string; p_tag_id?: string | null };
+        Returns: {
+          result: "stamped" | "coupon_issued" | "cooldown";
+          stamp_count: number;
+          stamps_required: number;
+          coupon_code: string | null;
+          retry_after_seconds: number | null;
+        }[];
+      };
       find_coupon_for_staff: {
         Args: { p_code: string };
         Returns: {
