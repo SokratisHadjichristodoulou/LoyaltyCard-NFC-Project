@@ -1,16 +1,18 @@
 import type { Translator } from "@/i18n/translate";
-import { STAMP_GOAL, type Card } from "@/lib/mock-data";
+import type { Card } from "@/lib/card";
 import { CupGlyph, StampDefs, StampMark } from "./Stamp";
 import { Celebration } from "./Celebration";
 
 // Hand-placed tilts so the card looks stamped by a person, not a printer.
 const TILTS = [-9, 6, -3, 11, -7, 4, -12, 8, -5, 3];
+const tilt = (i: number) => TILTS[i % TILTS.length];
 
 export function StampCard({ card, t }: { card: Card; t: Translator }) {
-  const filled = Math.min(card.stamps, STAMP_GOAL);
-  const complete = filled >= STAMP_GOAL;
+  const goal = card.goal;
+  const filled = Math.min(card.stamps, goal);
+  const complete = filled >= goal;
   const newestIndex = card.justStamped && filled > 0 ? filled - 1 : -1;
-  const remaining = STAMP_GOAL - filled;
+  const remaining = goal - filled;
 
   return (
     <section aria-labelledby="card-heading" className="relative">
@@ -29,10 +31,10 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
             <h2 id="card-heading" className="text-[0.7rem] font-semibold tracking-[0.28em] text-gold-ink uppercase">
               {t("card.eyebrow")}
             </h2>
-            <p className="sr-only">{t("card.progressLabel", { count: filled, goal: STAMP_GOAL })}</p>
+            <p className="sr-only">{t("card.progressLabel", { count: filled, goal })}</p>
             <p aria-hidden className="mt-1 font-display text-[2.6rem] leading-none font-medium tabular">
               {filled}
-              <span className="text-[1.5rem] text-muted">/{STAMP_GOAL}</span>
+              <span className="text-[1.5rem] text-muted">/{goal}</span>
             </p>
           </div>
           <p className="pb-1 text-xs font-medium tracking-[0.18em] text-muted tabular">
@@ -43,15 +45,15 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
         <div aria-hidden className="mx-5 border-t-2 border-dotted border-gold/50" />
 
         <ol className="grid grid-cols-5 gap-x-2.5 gap-y-3 px-5 pt-5 pb-4 min-[400px]:gap-x-3.5">
-          {Array.from({ length: STAMP_GOAL }, (_, i) => {
+          {Array.from({ length: goal }, (_, i) => {
             const n = i + 1;
             const isFilled = i < filled;
-            const isFree = n === STAMP_GOAL;
+            const isFree = n === goal;
             return (
               <li
                 key={n}
                 className={`relative aspect-square rounded-full ${i === newestIndex ? "stamp-new" : ""}`}
-                style={{ ["--tilt" as string]: `${TILTS[i]}deg` }}
+                style={{ ["--tilt" as string]: `${tilt(i)}deg` }}
               >
                 <span className="sr-only">{isFilled ? t("card.stampAlt", { n }) : t("card.emptyAlt", { n })}</span>
                 {isFilled ? (

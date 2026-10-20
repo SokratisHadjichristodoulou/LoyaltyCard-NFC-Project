@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { LOCALE_COOKIE, locales, type Locale } from "@/i18n/config";
+import { locales, type Locale } from "@/i18n/config";
+import { setLanguage } from "@/i18n/actions";
 
 const short: Record<Locale, string> = { el: "EL", en: "EN" };
 const native: Record<Locale, string> = { el: "Ελληνικά", en: "English" };
@@ -13,8 +14,10 @@ export function LangToggle({ locale, label }: { locale: Locale; label: string })
 
   function choose(next: Locale) {
     if (next === locale) return;
-    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
-    startTransition(() => router.refresh());
+    startTransition(async () => {
+      await setLanguage(next);
+      router.refresh();
+    });
   }
 
   return (
