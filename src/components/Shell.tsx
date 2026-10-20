@@ -37,7 +37,7 @@ export function Shell({
           <Image src="/logo.png" alt="" width={52} height={52} priority className="size-13 rounded-full" />
           <span className="font-display text-[1.05rem] leading-tight font-medium tracking-tight">
             Coffee Pause
-            <span className="block text-[0.68rem] font-sans font-semibold tracking-[0.32em] text-caramel-ink uppercase">
+            <span className="block text-[0.68rem] font-sans font-semibold tracking-[0.32em] text-gold-ink uppercase">
               Cyprus
             </span>
           </span>
@@ -61,7 +61,7 @@ export function Shell({
                   {t(`header.nav.${p.id}`)}
                   <span
                     aria-hidden
-                    className={`absolute inset-x-3 -bottom-px h-[3px] rounded-full bg-caramel transition-opacity ${
+                    className={`absolute inset-x-3 -bottom-px h-[3px] rounded-full bg-gold transition-opacity ${
                       current ? "opacity-100" : "opacity-0"
                     }`}
                   />

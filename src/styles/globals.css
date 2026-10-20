@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 /*
- * Palette. Placeholder values tuned to the placeholder logo
- * (espresso, crema, caramel). When the real logo arrives, re-derive these
- * from it; every component reads only these tokens.
+ * Palette taken from the logo: deep reddish-brown and warm gold, on cream.
+ * Every component reads only these tokens.
  */
 @theme {
-  --color-espresso: #2b1b13;
-  --color-roast: #5a3a28;
-  --color-muted: #6e5b4e;
-  --color-crema: #f2e8d8;
-  --color-foam: #f8f1e6;
-  --color-paper: #fbf7f0;
-  --color-line: #ddcdb6;
-  --color-caramel: #c98a4b;
-  --color-caramel-ink: #9c5a26;
-  --color-ink: #8e3b24;
+  --color-espresso: #3a1609;
+  --color-roast: #5c2b18;
+  --color-muted: #6b5045;
+  --color-crema: #f3e6d0;
+  --color-foam: #f8f0e2;
+  --color-paper: #fbf6ec;
+  --color-line: #e0ccad;
+  --color-gold: #d6a24e;
+  --color-gold-light: #efc874;
+  --color-gold-ink: #86591a;
+  --color-ink: #74280f;
   --color-olive: #4f5d3a;
   --color-olive-soft: #e3e6d3;
   --color-berry: #8a2f2a;
@@ -41,11 +41,11 @@ body {
   color: var(--color-espresso);
   font-family: var(--font-sans);
   /* Faint paper grain */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.11 0 0 0 0 0.07 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.23 0 0 0 0 0.09 0 0 0 0 0.04 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 :focus-visible {
-  outline: 2.5px solid var(--color-caramel-ink);
+  outline: 2.5px solid var(--color-gold-ink);
   outline-offset: 3px;
   border-radius: 6px;
 }
