@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Coffee Pause</title>
+</head>
+<body style="margin:0;padding:0;background:#fbf6ec;">
+{{ $en := eq (printf "%v" .Data.preferred_language) "en" }}
+{{ $link := printf "%s&token_hash=%s&type=email" .RedirectTo .TokenHash }}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fbf6ec;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#f3e6d0;border:1px solid #e0ccad;border-radius:24px;">
+        <tr>
+          <td align="center" style="padding:32px 28px 8px;">
+            <img src="{{ .SiteURL }}/logo.png" width="72" height="72" alt="Coffee Pause Cyprus" style="display:block;border:0;border-radius:36px;">
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 28px 0;font-family:Georgia,'Times New Roman',serif;color:#2c1209;font-size:26px;line-height:1.25;text-align:center;">
+            {{ if $en }}Welcome to Coffee Pause!{{ else }}Καλώς ήρθες στο Coffee Pause!{{ end }}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px 28px 0;font-family:Arial,Helvetica,sans-serif;color:#5c2b18;font-size:16px;line-height:1.5;text-align:center;">
+            {{ if $en }}Tap the button to open your stamp card. After 10 coffees, the next one is on us.{{ else }}Πάτα το κουμπί για να ανοίξεις την κάρτα σφραγίδων σου. Με 10 καφέδες, ο επόμενος είναι κερασμένος.{{ end }}
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding:24px 28px;">
+            <a href="{{ $link }}" style="display:inline-block;background:#3a1609;color:#efc874;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;text-decoration:none;padding:15px 30px;border-radius:999px;">
+              {{ if $en }}Open my card{{ else }}Άνοιξε την κάρτα μου{{ end }}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 28px 28px;font-family:Arial,Helvetica,sans-serif;color:#6b5045;font-size:13px;line-height:1.5;text-align:center;">
+            {{ if $en }}The link expires in 1 hour and works once. If you didn't ask for it, you can ignore this email.{{ else }}Ο σύνδεσμος λήγει σε 1 ώρα και δουλεύει μία φορά. Αν δεν τον ζήτησες εσύ, αγνόησε αυτό το email.{{ end }}
+          </td>
+        </tr>
+      </table>
+      <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;color:#6b5045;font-size:12px;">Coffee Pause Cyprus</p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
