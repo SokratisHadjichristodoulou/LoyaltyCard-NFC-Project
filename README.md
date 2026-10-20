@@ -16,7 +16,7 @@ from the main website. Search engines are blocked by `public/robots.txt`, a
 - Next.js (App Router) + TypeScript
 - Tailwind CSS
 - Supabase: Postgres with Row Level Security, and Auth (email magic link)
-- Host-agnostic: deploys to Vercel or Cloudflare Workers (via `@opennextjs/cloudflare`), see Deploying
+- Hosted on Cloudflare Workers (via `@opennextjs/cloudflare`); the code stays host-agnostic, see Deploying
 
 ## Run locally
 
@@ -379,7 +379,7 @@ missing from `en.json` fails the typecheck.
 ```
 public/                 logo.png, robots.txt (disallow all)
 references/             design screenshots (not deployed)
-wrangler.jsonc          Cloudflare Workers config (ignored by Vercel)
+wrangler.jsonc          Cloudflare Workers config
 open-next.config.ts     Cloudflare adapter config
 scripts/test-db.sh      migrations + database tests on a throwaway Postgres
 scripts/nfc-keys.ts     prints one tag's keys and SDM settings (npm run nfc:keys)
@@ -427,60 +427,61 @@ supabase/
 
 ## Deploying
 
-The same code runs on Vercel or on Cloudflare Workers. Both are set up and
-tested; pick one.
+The site is hosted on **Cloudflare Workers** (via `@opennextjs/cloudflare`):
+the free plan allows commercial use. Each merge to `main` deploys
+automatically through Workers Builds.
 
-| | Vercel | Cloudflare Workers |
-| --- | --- | --- |
-| Setup | Import the GitHub repo; nothing else | `wrangler.jsonc` and `open-next.config.ts` are in the repo |
-| Deploys | Every push to `main`, automatically | `npm run cf:deploy` (or connect Workers Builds to GitHub) |
-| Price for a business | The free Hobby plan is for non-commercial use only, so Pro (paid) | The free plan allows commercial use |
-| Caveat | None known | The adapter marks Next.js "proxy" (our `src/proxy.ts`) as experimental on Workers. Every flow passed in Cloudflare's local runtime, but it is less proven |
+One caveat: the adapter marks Next.js "proxy" (our `src/proxy.ts`) as
+experimental on Workers. Every flow passed in Cloudflare's local runtime
+(`npm run cf:preview`); after the first deploy, run the checks below on the
+live site too.
 
-### Before either
+### Before the first deploy
 
 1. Do the **Supabase setup** above, including the email templates, and run
    `npm run db:check`.
-2. Choose the subdomain, e.g. `card.coffeepause.com.cy`.
+2. Choose the subdomain, e.g. `card.coffeepause.com.cy`. The domain's DNS
+   must be on Cloudflare (free): Cloudflare dashboard → **Add a domain**, then
+   change the nameservers at your registrar to the two Cloudflare shows.
 3. Have these values ready: `NEXT_PUBLIC_SUPABASE_URL`,
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
    `NEXT_PUBLIC_SITE_URL` (`https://card.coffeepause.com.cy`), `NFC_TAG_SECRET`,
    and `CAFE_SLUG` if not the default. Don't set `MOCK_DATA` or `DEV_STAMPS`.
-   `NEXT_PUBLIC_*` values are built into the app, so they must be set before
-   the build.
 
-### Vercel
+### Connect the repo (Workers Builds)
 
-1. vercel.com → **Add New → Project** → import this GitHub repo. It detects
-   Next.js.
-2. **Settings → Environment Variables**: add the values above for
-   **Production**. Pull-request previews would use the same database, so
-   either leave **Preview** without them or point Preview at a separate
-   Supabase project.
-3. **Settings → Functions → Region**: choose the one nearest your Supabase
-   project's region (e.g. Frankfurt if Supabase is in eu-central-1).
-4. Deploy, then **Settings → Domains**: add the subdomain and create the DNS
-   record Vercel shows (usually a CNAME) at your domain registrar.
+1. Cloudflare dashboard → **Workers & Pages → Create → Import a repository**
+   → connect GitHub and pick this repo.
+2. Project name: `coffee-pause-card` (must match `name` in `wrangler.jsonc`).
+   Build command: `npx opennextjs-cloudflare build`. Deploy command:
+   `npx opennextjs-cloudflare deploy`.
+3. **Build variables**: the three `NEXT_PUBLIC_*` values. They are built
+   into the app, so they belong to the build, not the runtime.
+4. Save and deploy. Then, on the Worker:
+   - **Settings → Variables and Secrets**: add `SUPABASE_SERVICE_ROLE_KEY`,
+     `NFC_TAG_SECRET` (and `CAFE_SLUG`, if used), each as type **Secret**.
+     Secrets survive every deploy; plain-text variables set here would be
+     replaced by `wrangler.jsonc` on the next one.
+   - **Settings → Build → Branch control**: turn off builds for
+     non-production branches, so pull requests don't deploy against the live
+     database.
+   - **Settings → Domains & Routes → Add → Custom domain**: the subdomain.
+5. **Deployments → Retry deployment** (or merge anything to `main`) so the
+   first live version runs with the secrets.
 
-### Cloudflare Workers
+From then on, merging a pull request into `main` is a release.
 
-The domain's DNS must be on Cloudflare to attach a custom domain.
-
-1. `npx wrangler login`
-2. Server-only values, as Worker secrets (asked for one at a time):
-   ```bash
-   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
-   npx wrangler secret put NFC_TAG_SECRET
-   ```
-   (and `CAFE_SLUG` the same way, if you use it)
-3. Put the `NEXT_PUBLIC_*` values in `.env.local`, then build and deploy:
-   `npm run cf:deploy`.
-4. Cloudflare dashboard → **Workers & Pages → coffee-pause-card → Settings →
-   Domains & Routes → Add → Custom domain**: the subdomain.
+Deploying by hand instead (needs Node 22 and the values in `.env.local`):
+`npx wrangler login`, `npx wrangler secret put <NAME>` for each secret, then
+`npm run cf:deploy`.
 
 To try the Workers build locally first, put the same values in `.dev.vars`
 (git-ignored) and run `npm run cf:preview` (http://localhost:8787). CI builds
 the Workers bundle on every pull request.
+
+The code itself isn't tied to Cloudflare: importing the repo on Vercel works
+too (env vars in its settings), but its free Hobby plan is non-commercial
+only.
 
 ### After the first deploy
 
@@ -499,15 +500,15 @@ only).
 
 ## Releasing a change
 
-The code and the Supabase project change separately, so do these in order
-every time `main` gets new work:
+The code and the Supabase project change separately. Merging into `main`
+deploys straight away, so do these in order, steps 1 and 2 before merging:
 
 1. **Database first**: if the pull request adds files to `supabase/migrations/`,
    run `npx supabase db push` (old migrations are skipped, new ones run), then
    `npm run db:check`; it must say "Database is up to date".
 2. **Settings**: add any new environment variables the pull request lists
-   (`.env.local` locally, and on the host).
-3. **Then deploy** the new `main`.
+   (`.env.local` locally, and on the Worker in Cloudflare).
+3. **Then merge**: Workers Builds deploys the new `main`.
 
 New code against an old database fails (e.g. stamping or the admin pages).
 Each pull request ends with an "After merge" list of exactly these steps.
