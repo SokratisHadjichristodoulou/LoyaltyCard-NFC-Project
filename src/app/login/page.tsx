@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getT } from "@/i18n/server";
 import { getUser, safeNext } from "@/lib/auth";
@@ -5,7 +6,7 @@ import { Shell } from "@/components/Shell";
 import { LoginForm } from "@/components/LoginForm";
 import { TAP_COMPLETE_PATH } from "@/lib/nfc/paths";
 
-type Props = { searchParams: Promise<{ next?: string; error?: string; signed_out?: string }> };
+type Props = { searchParams: Promise<{ next?: string; error?: string; signed_out?: string; deleted?: string }> };
 
 export default async function LoginPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -26,6 +27,12 @@ export default async function LoginPage({ searchParams }: Props) {
       )}
       <p className="mt-3 max-w-[34ch] text-roast">{t("login.intro")}</p>
 
+      {params.deleted && (
+        <p role="status" className="mt-6 rounded-xl bg-olive-soft px-4 py-3 text-sm text-olive">
+          {t("account.deleted")}
+        </p>
+      )}
+
       {params.signed_out && (
         <p role="status" className="mt-6 rounded-xl bg-olive-soft px-4 py-3 text-sm text-olive">
           {t("login.signedOut")}
@@ -44,7 +51,12 @@ export default async function LoginPage({ searchParams }: Props) {
           }}
         />
       </div>
-      <p className="mt-5 text-sm text-muted">{t("login.privacy")}</p>
+      <p className="mt-5 text-sm text-muted">
+        {t("login.privacy")}{" "}
+        <Link href="/privacy" className="font-semibold text-gold-ink underline underline-offset-4">
+          {t("footer.privacy")}
+        </Link>
+      </p>
     </Shell>
   );
 }
