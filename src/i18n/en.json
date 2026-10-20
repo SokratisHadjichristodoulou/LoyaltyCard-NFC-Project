@@ -2,5 +2,86 @@
   "meta": {
     "title": "Coffee Pause · My card",
     "description": "The digital stamp card of Coffee Pause Cyprus."
+  },
+  "header": {
+    "logoAlt": "Coffee Pause Cyprus",
+    "languageLabel": "Language",
+    "nav": {
+      "label": "Main menu",
+      "card": "My card",
+      "coupon": "Coupon",
+      "how": "How it works"
+    }
+  },
+  "greeting": {
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening"
+  },
+  "card": {
+    "eyebrow": "Stamp card",
+    "number": "No",
+    "progressLabel": "{count} of {goal} stamps",
+    "remaining_one": "{count} more coffee until your free one.",
+    "remaining_other": "{count} more coffees until your free one.",
+    "freeSlot": "Free",
+    "stampAlt": "Stamp {n}",
+    "emptyAlt": "Empty slot {n}",
+    "justAdded": "A stamp was just added!",
+    "rule": "1 stamp for every coffee",
+    "stampText": "COFFEE · PAUSE · CYPRUS · "
+  },
+  "complete": {
+    "title": "Your card is full!",
+    "body": "Your next coffee is on us.",
+    "cta": "See your coupon"
+  },
+  "coupon": {
+    "title": "Free coffee",
+    "subtitle": "Any coffee you like, on the house.",
+    "eyebrow": "Coupon",
+    "codeLabel": "Coupon code",
+    "expiresLabel": "Expires",
+    "usedOnLabel": "Used on",
+    "statusLabel": "Status",
+    "status": {
+      "valid": "Valid",
+      "used": "Used",
+      "expired": "Expired"
+    },
+    "showStaff": "Show this code at the counter. Our staff will scan it.",
+    "usedNote": "This coupon has already been redeemed. Thank you!",
+    "expiredNote": "This coupon has expired.",
+    "qrAlt": "QR code for coupon {code}",
+    "qrPlaceholder": "Sample QR",
+    "emptyTitle": "No coupon yet",
+    "emptyBody_one": "Collect {count} more stamp to earn a free coffee.",
+    "emptyBody_other": "Collect {count} more stamps to earn a free coffee.",
+    "backToCard": "Back to my card"
+  },
+  "how": {
+    "title": "How it works",
+    "intro": "Three simple steps. No app, no paper cards.",
+    "steps": [
+      {
+        "title": "Buy your coffee",
+        "body": "Order whatever you love: espresso, freddo, cappuccino."
+      },
+      {
+        "title": "Get stamped",
+        "body": "Your barista taps your phone and the stamp lands instantly."
+      },
+      {
+        "title": "Enjoy your free one",
+        "body": "At 10 stamps you get a coupon for a coffee on the house."
+      }
+    ]
+  },
+  "footer": {
+    "name": "Coffee Pause Cyprus",
+    "instagram": "Follow us on Instagram"
+  },
+  "preview": {
+    "label": "Preview"
   }
 }
