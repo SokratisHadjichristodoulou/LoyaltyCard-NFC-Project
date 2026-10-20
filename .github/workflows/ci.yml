@@ -19,6 +19,22 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  cloudflare:
+    # The Cloudflare Workers bundle builds (see README, Deploying).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run cf:build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+          NEXT_PUBLIC_SITE_URL: https://card.example.com
+
   database:
     runs-on: ubuntu-latest
     services:
