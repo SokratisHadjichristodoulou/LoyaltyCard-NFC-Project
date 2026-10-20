@@ -260,6 +260,8 @@ different customers, staff and admins and checks what each can read and
 write. `supabase/tests/stamps.test.sql` proves the stamping rules: cooldown,
 coupon at 10, the card starting again, and that only the server can stamp.
 `supabase/tests/taps.test.sql` proves tap counters and one stamp per tap.
+`supabase/tests/delete-account.test.sql` proves deleting an account removes all
+of the customer's data.
 `supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
 same cafe, once only, never an expired coupon. `supabase/tests/admin.test.sql`
 proves the admin reports: right numbers for the admin's cafe, and nothing for
@@ -300,6 +302,23 @@ the errors.
 
 Both areas check the role again on the server.
 
+## Privacy and accounts
+
+- `/privacy`: the privacy notice in Greek and English. It covers what is
+  kept, why (GDPR legal bases), the cookies (only essential ones, so no consent
+  banner), who sees the data, how long it is kept, and the customer's rights,
+  including the Cyprus data protection commissioner.
+  **Before launch, fill in the business's legal name, address and contact email
+  in `src/lib/cafe-info.ts`.** Until then the page shows "[to be completed]".
+  Have the text checked by someone who knows your obligations; it describes
+  what the app does, but it is not legal advice.
+- `/account` (signed in): set or change your name (used in the greeting),
+  download everything kept about you as JSON (`/api/account/export`), and
+  delete your account. Deleting removes the sign-in account, and with it the
+  profile, card, stamps and coupons (proved in
+  `supabase/tests/delete-account.test.sql`). Staff and admin accounts are
+  removed by the owner instead (demote with SQL, then they can delete).
+
 ## Preview card states (mock data)
 
 With `MOCK_DATA=1 npm run dev`, card data comes from `src/lib/mock-data.ts`
@@ -339,7 +358,7 @@ missing from `en.json` fails the typecheck.
 | What                                              | Comes in                  |
 | ------------------------------------------------- | ------------------------- |
 | Programming and testing real NTAG 424 tags on iPhone and Android | when the tags arrive |
-| Customer display name: no screen to set it yet, so the greeting has no name | later step |
+| Business legal name, address and email on the privacy page (`src/lib/cafe-info.ts`) | before launch |
 | Custom SMTP for sign-in emails                    | before launch             |
 | Real logo file                                    | when provided             |
 | Mock data and preview bar (dev only, `MOCK_DATA=1`) | removed in a later step |
@@ -361,6 +380,9 @@ src/
     login/              magic-link sign-in and "check your email"
     auth/callback/      where the magic link lands
     logout/             sign out
+    privacy/            privacy notice
+    account/            name, download my data, delete account
+    api/account/export/ "download my data" (JSON)
     not-allowed/        shown for the wrong role
     tap/                opened by the NFC tag: verifies and stamps; complete/ after sign-in; problem/
     staff/              coupon scanner and redeem (protected)
@@ -371,6 +393,7 @@ src/
   lib/
     supabase/           clients (user, service role) and database types
     auth.ts             current user, profile, role checks
+    cafe-info.ts        legal details for the privacy page (fill in before launch)
     admin.ts            data for the admin pages
     card-data.ts        loads the customer's card (database or mock)
     nfc/                NTAG 424 SUN verification, key derivation, waiting-tap cookie
