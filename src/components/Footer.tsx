@@ -1,8 +1,9 @@
+import Link from "next/link";
 import type { Translator } from "@/i18n/translate";
 
 const INSTAGRAM_URL = "https://www.instagram.com/coffeepausecyprus/";
 
-export function Footer({ t }: { t: Translator }) {
+export function Footer({ t, signedIn = false }: { t: Translator; signedIn?: boolean }) {
   return (
     <footer className="flex flex-col items-center gap-3 border-t border-line py-7 text-center">
       <p className="font-display text-lg italic">{t("footer.name")}</p>
@@ -22,6 +23,14 @@ export function Footer({ t }: { t: Translator }) {
           <span className="sr-only"> (@coffeepausecyprus)</span>
         </span>
       </a>
+      {signedIn && (
+        <Link
+          href="/logout"
+          className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-muted underline-offset-4 hover:text-espresso hover:underline"
+        >
+          {t("header.signOut")}
+        </Link>
+      )}
     </footer>
   );
 }

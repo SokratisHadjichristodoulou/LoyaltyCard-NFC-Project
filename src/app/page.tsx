@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getT } from "@/i18n/server";
-import { getCard } from "@/lib/mock-data";
+import { getCardView } from "@/lib/card-data";
 import { Shell } from "@/components/Shell";
 import { StampCard } from "@/components/StampCard";
 import { withState } from "@/components/href";
@@ -17,17 +17,22 @@ function greetingKey() {
 }
 
 export default async function HomePage({ searchParams }: Props) {
-  const { state } = await searchParams;
   const t = await getT();
-  const card = getCard(state);
-  const complete = card.stamps >= 10 && card.coupon?.status === "valid";
+  const { card, state } = await getCardView((await searchParams).state, "/");
+  const complete = card.stamps >= card.goal && card.coupon?.status === "valid";
 
   return (
     <Shell t={t} active="card" state={state}>
       <h1 className="mb-6 font-display text-[2.4rem] leading-[1.02] font-medium tracking-tight">
-        {t(greetingKey())},
-        <br />
-        <span className="text-gold-ink italic">{card.customerName}.</span>
+        {card.customerName ? (
+          <>
+            {t(greetingKey())},
+            <br />
+            <span className="text-gold-ink italic">{card.customerName}.</span>
+          </>
+        ) : (
+          <>{t(greetingKey())}!</>
+        )}
       </h1>
 
       <StampCard card={card} t={t} />
