@@ -51,7 +51,8 @@ Other scripts:
 npm run build     # production build
 npm start         # serve the production build
 npm run lint      # typecheck
-npm test          # unit tests (NFC crypto, waiting-tap cookie)
+npm test          # unit tests (NFC crypto, waiting-tap cookie, migration list)
+npm run db:check  # is the Supabase project up to date with the code?
 npm run test:db   # migrations + database tests on a throwaway Postgres (see below)
 ```
 
@@ -269,7 +270,8 @@ write. `supabase/tests/stamps.test.sql` proves the stamping rules: cooldown,
 coupon at 10, the card starting again, and that only the server can stamp.
 `supabase/tests/taps.test.sql` proves tap counters and one stamp per tap.
 `supabase/tests/delete-account.test.sql` proves deleting an account removes all
-of the customer's data.
+of the customer's data. `supabase/tests/migrations.test.sql` proves the
+migration record, including that a skipped migration is not recorded.
 `supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
 same cafe, once only, never an expired coupon. `supabase/tests/admin.test.sql`
 proves the admin reports: right numbers for the admin's cafe, and nothing for
@@ -379,6 +381,7 @@ references/             design screenshots (not deployed)
 scripts/test-db.sh      migrations + database tests on a throwaway Postgres
 scripts/nfc-keys.ts     prints one tag's keys and SDM settings (npm run nfc:keys)
 scripts/nfc-tap-url.ts  makes a test tap URL (npm run nfc:url)
+scripts/db-check.ts     checks the database has every migration (npm run db:check)
 src/
   proxy.ts              session refresh, /staff and /admin protection
   app/
@@ -391,6 +394,7 @@ src/
     privacy/            privacy notice
     account/            name, download my data, delete account
     api/account/export/ "download my data" (JSON)
+    api/health/         200 when the database is reachable and up to date
     not-allowed/        shown for the wrong role
     tap/                opened by the NFC tag: verifies and stamps; complete/ after sign-in; problem/
     staff/              coupon scanner and redeem (protected)
@@ -424,13 +428,28 @@ The code and the Supabase project change separately, so do these in order
 every time `main` gets new work:
 
 1. **Database first**: if the pull request adds files to `supabase/migrations/`,
-   run `npx supabase db push` (old migrations are skipped, new ones run).
+   run `npx supabase db push` (old migrations are skipped, new ones run), then
+   `npm run db:check`; it must say "Database is up to date".
 2. **Settings**: add any new environment variables the pull request lists
    (`.env.local` locally, and on the host).
 3. **Then deploy** the new `main`.
 
 New code against an old database fails (e.g. stamping or the admin pages).
 Each pull request ends with an "After merge" list of exactly these steps.
+
+The app also checks this itself. The database records each migration that has
+run (`private.applied_migrations`), and the code knows which ones it needs
+(`src/lib/migrations.ts`):
+
+- `npm run db:check` says what is missing (exit code 1) or that all is well.
+- `GET /api/health` returns 200 when the database is reachable and up to date,
+  503 with the missing migrations otherwise. Point an uptime monitor at it.
+- Every admin page shows a red warning while migrations are missing.
+
+**Writing a new migration:** add it to `EXPECTED_MIGRATIONS` in
+`src/lib/migrations.ts`, and end the file with
+`insert into private.applied_migrations (version) values ('<version>') on conflict do nothing;`.
+`npm test` fails if either is forgotten.
 
 ## Branch workflow
 
