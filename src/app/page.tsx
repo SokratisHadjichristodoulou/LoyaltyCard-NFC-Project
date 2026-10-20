@@ -4,8 +4,10 @@ import { getCardView } from "@/lib/card-data";
 import { Shell } from "@/components/Shell";
 import { StampCard } from "@/components/StampCard";
 import { withState } from "@/components/href";
+import { addTestStamp } from "@/app/actions/dev-stamp";
+import { isDevStampEnabled } from "@/lib/env";
 
-type Props = { searchParams: Promise<{ state?: string }> };
+type Props = { searchParams: Promise<{ state?: string; stamped?: string; cooldown?: string }> };
 
 function greetingKey() {
   const hour = Number(
@@ -18,8 +20,12 @@ function greetingKey() {
 
 export default async function HomePage({ searchParams }: Props) {
   const t = await getT();
-  const { card, state } = await getCardView((await searchParams).state, "/");
-  const complete = card.stamps >= card.goal && card.coupon?.status === "valid";
+  const params = await searchParams;
+  const { card, state, source } = await getCardView(params.state, "/", { justStamped: params.stamped === "1" });
+  const hasCoupon = card.coupon?.status === "valid";
+  const complete = card.stamps >= card.goal && hasCoupon;
+  const cooldownSeconds = Number(params.cooldown);
+  const cooldownMinutes = Number.isFinite(cooldownSeconds) && cooldownSeconds > 0 ? Math.ceil(cooldownSeconds / 60) : 0;
 
   return (
     <Shell t={t} active="card" state={state}>
@@ -35,6 +41,27 @@ export default async function HomePage({ searchParams }: Props) {
         )}
       </h1>
 
+      {cooldownMinutes > 0 && (
+        <p role="status" className="mb-5 rounded-xl bg-foam px-4 py-3 text-sm leading-relaxed text-roast ring-1 ring-line">
+          {t.plural("stamp.cooldown", { count: cooldownMinutes })}
+        </p>
+      )}
+
+      {hasCoupon && !complete && (
+        <Link
+          href={withState("/coupon", state)}
+          className="mb-5 flex items-center gap-4 rounded-[1.5rem] bg-espresso px-5 py-4 text-crema ring-1 ring-gold/50 ring-inset"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-xl font-medium text-gold-light">{t("couponReady.title")}</span>
+            <span className="mt-0.5 block text-sm text-crema/80">{t("couponReady.body")}</span>
+          </span>
+          <span className="shrink-0 text-sm font-semibold text-gold-light">
+            {t("couponReady.cta")} <span aria-hidden>→</span>
+          </span>
+        </Link>
+      )}
+
       <StampCard card={card} t={t} />
 
       {complete && (
@@ -49,6 +76,14 @@ export default async function HomePage({ searchParams }: Props) {
             <span aria-hidden>→</span>
           </Link>
         </div>
+      )}
+      {source === "db" && isDevStampEnabled() && (
+        <form action={addTestStamp} className="mt-8 rounded-2xl border border-dashed border-line px-4 py-3">
+          <p className="mb-2 text-[0.7rem] font-semibold tracking-[0.2em] text-muted uppercase">{t("dev.label")}</p>
+          <button type="submit" className="min-h-11 rounded-full bg-foam px-4 text-sm font-semibold text-roast ring-1 ring-line">
+            {t("dev.stamp")}
+          </button>
+        </form>
       )}
     </Shell>
   );

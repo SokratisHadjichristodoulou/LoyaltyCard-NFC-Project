@@ -5,17 +5,27 @@ import { Shell } from "@/components/Shell";
 import { Coupon } from "@/components/Coupon";
 import { CupGlyph } from "@/components/Stamp";
 import { withState } from "@/components/href";
+import { Celebration } from "@/components/Celebration";
+import { couponQrSvg } from "@/lib/coupons";
 
-type Props = { searchParams: Promise<{ state?: string }> };
+type Props = { searchParams: Promise<{ state?: string; new?: string }> };
 
 export default async function CouponPage({ searchParams }: Props) {
   const t = await getT();
-  const { card, state } = await getCardView((await searchParams).state, "/coupon");
+  const params = await searchParams;
+  const { card, state } = await getCardView(params.state, "/coupon");
+  const justIssued = params.new === "1" && card.coupon?.status === "valid";
 
   return (
     <Shell t={t} active="coupon" state={state}>
       {card.coupon ? (
-        <Coupon coupon={card.coupon} t={t} />
+        <div className="relative">
+          {justIssued && (
+            <p role="status" className="rise-in mb-5 text-center font-display text-3xl font-medium text-gold-ink">{t("coupon.newTitle")}</p>
+          )}
+          <Coupon coupon={card.coupon} qrSvg={await couponQrSvg(card.coupon.code)} t={t} />
+          {justIssued && <Celebration />}
+        </div>
       ) : (
         <div className="rounded-[1.75rem] border border-dashed border-line px-6 py-10 text-center">
           <CupGlyph className="mx-auto size-14 text-gold" />

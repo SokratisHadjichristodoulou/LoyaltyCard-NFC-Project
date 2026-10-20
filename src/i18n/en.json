@@ -54,11 +54,11 @@
     "usedNote": "This coupon has already been redeemed. Thank you!",
     "expiredNote": "This coupon has expired.",
     "qrAlt": "QR code for coupon {code}",
-    "qrPlaceholder": "Sample QR",
     "emptyTitle": "No coupon yet",
     "emptyBody_one": "Collect {count} more stamp to earn a free coffee.",
     "emptyBody_other": "Collect {count} more stamps to earn a free coffee.",
-    "backToCard": "Back to my card"
+    "backToCard": "Back to my card",
+    "newTitle": "You've earned a free coffee!"
   },
   "how": {
     "title": "How it works",
@@ -127,5 +127,18 @@
   "admin": {
     "title": "Admin",
     "placeholder": "The admin dashboard comes in a later step."
+  },
+  "stamp": {
+    "cooldown_one": "You were just stamped. You can get the next one in {count} minute.",
+    "cooldown_other": "You were just stamped. You can get the next one in {count} minutes."
+  },
+  "couponReady": {
+    "title": "You have a free coffee!",
+    "body": "Show your coupon at the counter whenever you like.",
+    "cta": "See your coupon"
+  },
+  "dev": {
+    "label": "Test · dev only",
+    "stamp": "Add a test stamp"
   }
 }
