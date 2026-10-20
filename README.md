@@ -122,6 +122,9 @@ once it is tested:
 | 5     | `feat/staff-scanner`     | `/staff` scanner and redeem API                    |
 | 6     | `feat/admin-dashboard`   | `/admin` stats, customers, tags, export            |
 
+Every pull request runs CI (`.github/workflows/ci.yml`): `npm ci`, typecheck
+and production build. Merge only when it is green.
+
 Commit messages use a short prefix: `feat:`, `fix:`, `chore:`, `docs:`,
 `refactor:`, `style:`, `test:`.
 
