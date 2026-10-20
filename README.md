@@ -15,7 +15,7 @@ from the main website. Search engines are blocked by `public/robots.txt`, a
 
 - Next.js (App Router) + TypeScript
 - Tailwind CSS
-- Supabase (database and auth, added in `feat/database-auth`)
+- Supabase: Postgres with Row Level Security, and Auth (email magic link)
 - Host-agnostic: deploys to Vercel or Cloudflare (via `@opennextjs/cloudflare`)
 
 ## Run locally
@@ -24,24 +24,170 @@ Requires Node 20.9 or newer.
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in values when a step needs them
+cp .env.example .env.local   # then fill in the Supabase values (see below)
 npm run dev                  # http://localhost:3000
+```
+
+To look at the screens without a database, use the mock data instead:
+
+```bash
+MOCK_DATA=1 npm run dev
 ```
 
 Other scripts:
 
 ```bash
-npm run build   # production build
-npm start       # serve the production build
-npm run lint    # typecheck
+npm run build     # production build
+npm start         # serve the production build
+npm run lint      # typecheck
+npm run test:db   # migrations + RLS tests on a throwaway Postgres (see below)
 ```
 
-## Preview card states
+## Supabase setup
 
-Until the database is connected, all card data comes from
-`src/lib/mock-data.ts`. Set `ACTIVE_SCENARIO` to one of the states below, or
-add `?state=<name>` to any URL (e.g. `/coupon?state=used`). The dashed
-"Preview" bar at the bottom of each page switches between them too.
+Do this once per Supabase project.
+
+### 1. Keys
+
+In the Supabase dashboard, **Project Settings → API**, copy into `.env.local`:
+
+- Project URL → `NEXT_PUBLIC_SUPABASE_URL`
+- `anon` / publishable key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `service_role` / secret key → `SUPABASE_SERVICE_ROLE_KEY` (server only, never commit it)
+
+### 2. Run the migrations and the seed
+
+The migrations live in `supabase/migrations/` and run in filename order. Each
+one is re-runnable: running it again changes nothing.
+
+With the Supabase CLI:
+
+```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push --include-seed
+```
+
+If the CLI asks for a config file first, run `npx supabase init`; it adds
+`supabase/config.toml` and leaves the migrations alone.
+
+Or without the CLI: open **SQL Editor** in the dashboard and run, in order,
+each file in `supabase/migrations/`, then `supabase/seed.sql`.
+
+The seed creates the cafe **Coffee Pause Cyprus** (`coffee-pause-cyprus`) with
+the default rules: 10 stamps per free coffee, coupons valid for 90 days and a
+180-second cooldown between stamps. It contains no customer data.
+
+### 3. Auth settings
+
+In **Authentication → URL Configuration**:
+
+- **Site URL**: the production URL, e.g. `https://card.example.com`
+- **Redirect URLs**: add `http://localhost:3000/**` and `https://card.example.com/**`
+
+In **Authentication → Emails → Magic Link**, change the link in the template so
+it also works when the email is opened on a different device or browser:
+
+```html
+<a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Sign in</a>
+```
+
+The default template also works, but only in the same browser that asked for
+the link. Supabase's built-in email sender only allows a few emails per hour;
+set up a custom SMTP provider under **Authentication → Emails** before going
+live.
+
+### 4. Make yourself admin
+
+Sign in once on the site with your email, then run this in the SQL Editor
+(replace the email):
+
+```sql
+update public.profiles
+set role = 'admin', cafe_id = (select id from public.cafes where slug = 'coffee-pause-cyprus')
+where id = (select id from auth.users where email = 'you@example.com');
+```
+
+Use `role = 'staff'` for baristas. To demote, set `role = 'customer', cafe_id = null`.
+Roles can only be changed like this, by the database owner: the app, the
+service role and signups can never grant `staff` or `admin`.
+
+## Database
+
+| Table      | What it holds                                                          |
+| ---------- | ---------------------------------------------------------------------- |
+| `cafes`    | Name, slug and rules (`stamps_required`, `coupon_valid_days`, `stamp_cooldown_seconds`) |
+| `profiles` | One per auth user: `role`, `display_name`, `preferred_language`; `cafe_id` for staff and admins. Created automatically at signup |
+| `tags`     | NFC tags: `label`, unique `tag_uid`, optional `staff_id`, `active`, `last_counter`. No keys stored |
+| `cards`    | One per customer per cafe, with `stamp_count`                          |
+| `stamps`   | Audit log of every stamp given                                         |
+| `coupons`  | Free-coffee coupons: unguessable `code` (e.g. `CP-7K4Q-29XM-HD3P-WR8N`), `status`, expiry, who redeemed it |
+
+Every table has a `cafe_id` (on `profiles` it is empty for customers), so more
+cafes can be added later without a redesign.
+
+### Who can do what (Row Level Security)
+
+RLS is on for every table.
+
+- **Customers** read only their own profile, card, stamps and coupons, and can
+  change only their own display name and language.
+- **Customers never write** cards, stamps or coupons. The server does those
+  writes with the service role.
+- **Staff** can look up one coupon by its exact code
+  (`find_coupon_for_staff`), for their own cafe only. They cannot list
+  coupons. Redeeming happens in a server route that checks their role
+  (`feat/staff-scanner`).
+- **Admins** read everything that belongs to their cafe.
+- **Signed-out visitors** can read cafe info only.
+
+### RLS tests
+
+`supabase/tests/rls.test.sql` proves these rules: it signs in as different
+customers, staff and admins and checks what each can read and write.
+`npm run test:db` runs every migration twice (to prove they are
+re-runnable), then the seed and the tests, on a throwaway database. It runs in
+CI on every pull request.
+
+To run it locally you need `psql` and a Postgres you can throw away (never the
+Supabase project):
+
+```bash
+docker run -d --name cp-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16
+TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres npm run test:db
+```
+
+`supabase/tests/supabase-stub.sql` stands in for the parts of Supabase a plain
+Postgres doesn't have (the API roles and `auth.uid()`). It is only for tests.
+
+## Sign-in
+
+- `/login`: email form. Supabase emails a magic link; there are no passwords.
+- `/login/check-email`: "check your email" screen.
+- `/auth/callback`: where the link lands. It signs the customer in and
+  returns them to the page they were trying to open.
+- `/logout`: confirms, then signs out.
+
+On first visit the customer's card row is created, and `/` shows the real card
+from the database. All of these screens are in Greek and English, including
+the errors.
+
+`src/proxy.ts` keeps the session fresh and guards the protected areas:
+
+| Path      | Who may open it | Signed out         | Wrong role                 |
+| --------- | --------------- | ------------------ | -------------------------- |
+| `/staff`  | staff, admin    | redirect to login  | "not allowed" page (403)   |
+| `/admin`  | admin           | redirect to login  | "not allowed" page (403)   |
+
+Both pages check the role again on the server. They are placeholders for now.
+
+## Preview card states (mock data)
+
+With `MOCK_DATA=1 npm run dev`, card data comes from `src/lib/mock-data.ts`
+instead of the database. It only works on the dev server and is ignored in
+production builds. Set `ACTIVE_SCENARIO` there, add `?state=<name>` to a URL
+(e.g. `/coupon?state=used`), or use the dashed "Preview" bar at the bottom of
+each page.
 
 | State      | What you see                              |
 | ---------- | ----------------------------------------- |
@@ -55,10 +201,10 @@ add `?state=<name>` to any URL (e.g. `/coupon?state=used`). The dashed
 ## Languages
 
 Greek and English, switched with the EL / EN toggle in the header. The
-default is the browser language, falling back to Greek; an explicit choice is
-saved in the `cp_lang` cookie. All text lives in `src/i18n/el.json` and
-`src/i18n/en.json`. Greek is the reference: a key missing from `en.json`
-fails the typecheck.
+default is the browser language, falling back to Greek. A choice is saved in
+the `cp_lang` cookie and, when signed in, on the profile. All text lives in
+`src/i18n/el.json` and `src/i18n/en.json`. Greek is the reference: a key
+missing from `en.json` fails the typecheck.
 
 ## Brand
 
@@ -69,41 +215,54 @@ fails the typecheck.
   components only use these tokens.
 - Type: Piazzolla (headings) and Commissioner (text), both with Greek support.
 
-## Mocked for now
+## Still mocked or missing
 
-| Mocked                                       | Replaced in               |
-| -------------------------------------------- | ------------------------- |
-| Card, customer and coupon data (`mock-data.ts`) | `feat/database-auth`   |
-| Customer identity (always "Μαρία")          | `feat/database-auth`      |
-| "Stamp just added" on page open             | `feat/tag-verification`   |
-| Placeholder, non-scannable QR               | `feat/customer-coupon`    |
-| Coupon status set by hand                   | `feat/staff-scanner`      |
-| Fixed goal and expiry rules                 | `feat/admin-dashboard`    |
-| Preview bar and `?state=` override          | removed with the mock data |
+| What                                              | Comes in                  |
+| ------------------------------------------------- | ------------------------- |
+| Adding stamps: no NFC yet, stamps only change through SQL | `feat/tag-verification` |
+| "Stamp just added" animation after a tap          | `feat/tag-verification`   |
+| Issuing a coupon at 10 stamps, real QR code (the QR is a placeholder) | `feat/customer-coupon` |
+| Staff scanner and redeem API (`/staff` is a placeholder) | `feat/staff-scanner` |
+| Admin dashboard and export (`/admin` is a placeholder) | `feat/admin-dashboard` |
+| Customer display name: no screen to set it yet, so the greeting has no name | later step |
+| Custom SMTP for sign-in emails                    | before launch             |
+| Real logo file                                    | when provided             |
+| Mock data and preview bar (dev only, `MOCK_DATA=1`) | removed in a later step |
 
 ## Project structure
 
 ```
 public/                 logo.png, robots.txt (disallow all)
 references/             design screenshots (not deployed)
+scripts/test-db.sh      migrations + RLS tests on a throwaway Postgres
 src/
+  proxy.ts              session refresh, /staff and /admin protection
   app/
     page.tsx            customer card
     coupon/             free-coffee coupon
     how-it-works/       how the card works
-    tap/                opened by the NFC tag, verifies and stamps
-    staff/              coupon scanner (protected)
-    admin/              dashboard (protected)
-    api/                stamp, redeem, export
+    login/              magic-link sign-in and "check your email"
+    auth/callback/      where the magic link lands
+    logout/             sign out
+    not-allowed/        shown for the wrong role
+    tap/                opened by the NFC tag, verifies and stamps (later)
+    staff/              coupon scanner (protected, placeholder)
+    admin/              dashboard (protected, placeholder)
+    api/                stamp, redeem, export (later)
   components/
   lib/
-    supabase/           Supabase clients
-    nfc/                tag signing and verification
-    coupons.ts          coupon rules
-    mock-data.ts        mock state for the landing page step (removed later)
+    supabase/           clients (user, service role) and database types
+    auth.ts             current user, profile, role checks
+    card-data.ts        loads the customer's card (database or mock)
+    nfc/                tag signing and verification (later)
+    coupons.ts          coupon rules (later)
+    mock-data.ts        dev-only preview states
   i18n/                 el.json, en.json
   styles/               global styles
-supabase/migrations/    database migrations
+supabase/
+  migrations/           schema and RLS, in order
+  seed.sql              the cafe and its rules
+  tests/                RLS tests and the plain-Postgres stand-in
 ```
 
 ## Branch workflow
@@ -117,14 +276,15 @@ once it is tested:
 | Order | Branch                   | Scope                                              |
 | ----- | ------------------------ | -------------------------------------------------- |
 | 1     | `feat/landing-page`      | Front end with mock data: card, coupon, how it works, EL/EN |
-| 2     | `feat/database-auth`     | Supabase schema, customer accounts and sessions    |
+| 2     | `feat/database-auth`     | Supabase schema, RLS, magic-link sign-in, protected areas |
 | 3     | `feat/tag-verification`  | Signed NFC tag URLs, `/tap` route, stamp API       |
 | 4     | `feat/customer-coupon`   | Coupon issuing, real QR codes, expiry              |
 | 5     | `feat/staff-scanner`     | `/staff` scanner and redeem API                    |
 | 6     | `feat/admin-dashboard`   | `/admin` stats, customers, tags, export            |
 
-Every pull request runs CI (`.github/workflows/ci.yml`): `npm ci`, typecheck
-and production build. Merge only when it is green.
+Every pull request runs CI (`.github/workflows/ci.yml`): typecheck,
+production build, and the database migrations and RLS tests. Merge only when
+it is green.
 
 Commit messages use a short prefix: `feat:`, `fix:`, `chore:`, `docs:`,
 `refactor:`, `style:`, `test:`.
@@ -135,11 +295,15 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 
 | Variable                         | Used for                                          |
 | -------------------------------- | ------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`           | Public URL of the site (tag and QR links)         |
+| `NEXT_PUBLIC_SITE_URL`           | Public URL of the site, used in sign-in links. Optional locally |
 | `NEXT_PUBLIC_SUPABASE_URL`       | Supabase project URL                              |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`  | Supabase public (anon) key                        |
-| `SUPABASE_SERVICE_ROLE_KEY`      | Server-only Supabase key. Never expose to the browser |
-| `NFC_TAG_SECRET`                 | Signs and verifies NFC tag URLs                   |
-| `COUPON_SIGNING_SECRET`          | Signs coupon QR payloads                          |
-| `STAFF_EMAILS`                   | Comma-separated emails allowed into `/staff`      |
-| `ADMIN_EMAILS`                   | Comma-separated emails allowed into `/admin`      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`  | Supabase anon / publishable key                   |
+| `SUPABASE_SERVICE_ROLE_KEY`      | Supabase service_role / secret key. Server only, never exposed to the browser |
+| `CAFE_SLUG`                      | Which cafe this site serves. Defaults to `coffee-pause-cyprus` |
+| `MOCK_DATA`                      | `1` to preview mock card states on the dev server |
+| `NFC_TAG_SECRET`                 | Signs and verifies NFC tag URLs (later step)      |
+| `COUPON_SIGNING_SECRET`          | Signs coupon QR payloads (later step)             |
+| `TEST_DATABASE_URL`              | Throwaway Postgres for `npm run test:db` (not used by the app) |
+
+`NEXT_PUBLIC_*` values are built into the app, so set them before
+`npm run build`.
