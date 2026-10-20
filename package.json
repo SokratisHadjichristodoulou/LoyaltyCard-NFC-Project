@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit --incremental false",
-    "test:db": "bash scripts/test-db.sh"
+    "test:db": "bash scripts/test-db.sh",
+    "test": "vitest run",
+    "nfc:keys": "tsx --env-file-if-exists=.env.local scripts/nfc-keys.ts",
+    "nfc:url": "tsx --env-file-if-exists=.env.local scripts/nfc-tap-url.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -27,7 +30,9 @@
     "@types/react-dom": "^19.3.0",
     "postcss": "^8.5.31",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2"
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
   },
   "engines": {
     "node": ">=20.9"
