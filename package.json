@@ -10,7 +10,8 @@
     "test:db": "bash scripts/test-db.sh",
     "test": "vitest run",
     "nfc:keys": "tsx --env-file-if-exists=.env.local scripts/nfc-keys.ts",
-    "nfc:url": "tsx --env-file-if-exists=.env.local scripts/nfc-tap-url.ts"
+    "nfc:url": "tsx --env-file-if-exists=.env.local scripts/nfc-tap-url.ts",
+    "db:check": "tsx --env-file-if-exists=.env.local scripts/db-check.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

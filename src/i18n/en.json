@@ -244,6 +244,12 @@
         "invalid": "Check the values: stamps 1–50, days 1–730, minutes 0–1440.",
         "failed": "They weren't saved. Try again."
       }
+    },
+    "schema": {
+      "title": "The database is out of date",
+      "missing": "Missing migrations: {list}. Until they run, some pages won't work.",
+      "tracker": "At least migration 20261021000700, and possibly earlier ones, hasn't run. Until they do, some pages won't work.",
+      "fix": "Run this, then reload the page:"
     }
   },
   "stamp": {
