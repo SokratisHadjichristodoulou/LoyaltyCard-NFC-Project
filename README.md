@@ -147,8 +147,7 @@ RLS is on for every table.
   writes with the service role.
 - **Staff** can look up one coupon by its exact code
   (`find_coupon_for_staff`), for their own cafe only. They cannot list
-  coupons. Redeeming happens in a server route that checks their role
-  (`feat/staff-scanner`).
+  coupons. Redeeming happens in a server route that checks their role.
 - **Admins** read everything that belongs to their cafe.
 - **Signed-out visitors** can read cafe info only.
 
@@ -164,9 +163,25 @@ the server (service role) can call. In one transaction it:
 4. at `stamps_required`, issues a coupon valid for `coupon_valid_days` and
    starts the card again.
 
-The coupon page shows a real QR code. It opens `/staff?code=<code>`, where the
-staff scanner (next step) looks the coupon up and redeems it once. The code
-itself is the secret, so the QR needs no extra signing.
+The coupon page shows a real QR code. It opens `/staff?code=<code>`, where
+staff check and redeem it. The code itself is the secret (16 random
+characters), so the QR needs no extra signing.
+
+### Redeeming (staff)
+
+`/staff` is the scanner. Staff can:
+
+- scan the customer's QR with the phone's own camera app: the link opens
+  `/staff?code=…` (after signing in, if needed, with the code kept);
+- or tap **Open the camera** on `/staff` to scan in the page;
+- or type the code.
+
+The page shows whether the coupon is valid, used (and when) or expired. **Redeem
+free coffee** posts to `/api/redeem`, which only accepts requests from this
+site, checks the user is staff or admin, and calls `redeem_coupon`. That
+database function checks the role again, finds coupons only from the staff
+member's own cafe, and locks the coupon row, so a coupon is redeemed at most
+once even if two baristas press at the same moment.
 
 ### Database tests
 
@@ -174,6 +189,8 @@ itself is the secret, so the QR needs no extra signing.
 different customers, staff and admins and checks what each can read and
 write. `supabase/tests/stamps.test.sql` proves the stamping rules: cooldown,
 coupon at 10, the card starting again, and that only the server can stamp.
+`supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
+same cafe, once only, never an expired coupon.
 `npm run test:db` runs every migration twice (to prove they are
 re-runnable), then the seed and the tests, on a throwaway database. It runs in
 CI on every pull request.
@@ -205,10 +222,10 @@ the errors.
 
 | Path      | Who may open it | Signed out         | Wrong role                 |
 | --------- | --------------- | ------------------ | -------------------------- |
-| `/staff`  | staff, admin    | redirect to login  | "not allowed" page (403)   |
+| `/staff`  | staff, admin    | redirect to login (keeps `?code=`) | "not allowed" page (403) |
 | `/admin`  | admin           | redirect to login  | "not allowed" page (403)   |
 
-Both pages check the role again on the server. They are placeholders for now.
+Both pages check the role again on the server. `/admin` is a placeholder for now.
 
 ## Preview card states (mock data)
 
@@ -249,7 +266,6 @@ missing from `en.json` fails the typecheck.
 | What                                              | Comes in                  |
 | ------------------------------------------------- | ------------------------- |
 | NFC tap verification: stamps come from the dev-only test button for now | `feat/tag-verification` |
-| Staff scanner and redeem API (`/staff` is a placeholder; the QR already points at it) | `feat/staff-scanner` |
 | Admin dashboard and export (`/admin` is a placeholder) | `feat/admin-dashboard` |
 | Customer display name: no screen to set it yet, so the greeting has no name | later step |
 | Custom SMTP for sign-in emails                    | before launch             |
@@ -273,16 +289,18 @@ src/
     logout/             sign out
     not-allowed/        shown for the wrong role
     tap/                opened by the NFC tag, verifies and stamps (later)
-    staff/              coupon scanner (protected, placeholder)
+    staff/              coupon scanner and redeem (protected)
     admin/              dashboard (protected, placeholder)
-    api/                stamp, redeem, export (later)
-  components/
+    api/redeem/         redeem a coupon (staff only)
+    api/                stamp, export (later)
+  components/           (staff/: QR scanner, redeem button)
   lib/
     supabase/           clients (user, service role) and database types
     auth.ts             current user, profile, role checks
     card-data.ts        loads the customer's card (database or mock)
     nfc/                tag signing and verification (later)
     coupons.ts          coupon QR code
+    coupon-code.ts      reading a code from a scan or typed input
     stamping.ts         adds a stamp through record_stamp
     mock-data.ts        dev-only preview states
   i18n/                 el.json, en.json
