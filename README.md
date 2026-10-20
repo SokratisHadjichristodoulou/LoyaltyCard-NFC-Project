@@ -51,6 +51,7 @@ Other scripts:
 npm run build     # production build
 npm start         # serve the production build
 npm run lint      # typecheck
+npm test          # unit tests (NFC crypto, waiting-tap cookie)
 npm run test:db   # migrations + database tests on a throwaway Postgres (see below)
 ```
 
@@ -183,6 +184,55 @@ database function checks the role again, finds coupons only from the staff
 member's own cafe, and locks the coupon row, so a coupon is redeemed at most
 once even if two baristas press at the same moment.
 
+### NFC taps (NTAG 424 DNA)
+
+The barista taps an NTAG 424 DNA tag on the customer's phone. Every tap the
+tag writes a fresh, signed URL:
+
+```
+https://card.example.com/tap?e=<encrypted UID + tap counter>&c=<signature>
+```
+
+`/tap` decrypts `e` and checks `c` with that tag's own key (NXP's "Secure
+Unique NFC" scheme, AN12196), then `consume_tag_tap` accepts the tap only if
+its counter is higher than the last one seen. A copied or replayed URL, a
+tampered one, an unregistered tag or a deactivated tag is refused with a
+clear message in Greek or English. A good tap then goes through `record_stamp`,
+which also refuses a second stamp for the same tap.
+
+If the customer isn't signed in, the verified tap waits in a signed,
+httpOnly cookie for 15 minutes while they sign in, then becomes their stamp
+(`/tap/complete`). If the sign-in link is opened on another device, the
+customer is asked for a new tap.
+
+**Keys.** Nothing secret is stored in the database. Every key is derived from
+`NFC_TAG_SECRET`: key 1 (decrypts `e`) is shared by all tags, key 2 (checks
+`c`) and keys 0, 3, 4 are unique per tag. Changing `NFC_TAG_SECRET` means
+reprogramming every tag. The crypto is tested against NXP's published example
+and the RFC 4493 vectors (`npm test`).
+
+**Setting up a tag**
+
+1. Put `NFC_TAG_SECRET` (`openssl rand -hex 32`) and the live `NEXT_PUBLIC_SITE_URL`
+   in `.env.local`, and the same `NFC_TAG_SECRET` in the host's environment.
+2. Read the tag's 7-byte UID with an NFC app (e.g. NXP TagInfo) and add the tag
+   in **Admin → NFC tags**.
+3. Print its settings: `npm run nfc:keys -- <UID>`. This shows the five keys,
+   the URL to write and the SDM offsets.
+4. Program the tag with an NTAG 424 tool (e.g. NXP TagXplorer with a USB reader,
+   or an Android app that supports NTAG 424 SDM): write the NDEF URL, enable SDM
+   with the printed settings, then change keys 1–4 and key 0 last. The exact
+   screens depend on the tool.
+5. Tap it with a phone: you should land on your card with a new stamp. Tap
+   again within 3 minutes: you should see the cooldown message.
+
+Keep the `nfc:keys` output private: anyone with a tag's key 2 could make fake
+taps for that tag. If a tag is lost, deactivate it in the admin.
+
+**Testing without a tag.** `npm run nfc:url -- <UID> <counter>` prints a tap URL
+exactly as a programmed tag would (the UID must be registered in the admin).
+Use a higher counter for each test tap.
+
 ### Admin dashboard
 
 `/admin` is for admins only (see "Make yourself admin"). It has four sections:
@@ -209,6 +259,7 @@ the admin role and then write with the service role, limited to that cafe.
 different customers, staff and admins and checks what each can read and
 write. `supabase/tests/stamps.test.sql` proves the stamping rules: cooldown,
 coupon at 10, the card starting again, and that only the server can stamp.
+`supabase/tests/taps.test.sql` proves tap counters and one stamp per tap.
 `supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
 same cafe, once only, never an expired coupon. `supabase/tests/admin.test.sql`
 proves the admin reports: right numbers for the admin's cafe, and nothing for
@@ -287,7 +338,7 @@ missing from `en.json` fails the typecheck.
 
 | What                                              | Comes in                  |
 | ------------------------------------------------- | ------------------------- |
-| NFC tap verification: stamps come from the dev-only test button for now | `feat/tag-verification` |
+| Programming and testing real NTAG 424 tags on iPhone and Android | when the tags arrive |
 | Customer display name: no screen to set it yet, so the greeting has no name | later step |
 | Custom SMTP for sign-in emails                    | before launch             |
 | Real logo file                                    | when provided             |
@@ -298,7 +349,9 @@ missing from `en.json` fails the typecheck.
 ```
 public/                 logo.png, robots.txt (disallow all)
 references/             design screenshots (not deployed)
-scripts/test-db.sh      migrations + RLS tests on a throwaway Postgres
+scripts/test-db.sh      migrations + database tests on a throwaway Postgres
+scripts/nfc-keys.ts     prints one tag's keys and SDM settings (npm run nfc:keys)
+scripts/nfc-tap-url.ts  makes a test tap URL (npm run nfc:url)
 src/
   proxy.ts              session refresh, /staff and /admin protection
   app/
@@ -309,19 +362,18 @@ src/
     auth/callback/      where the magic link lands
     logout/             sign out
     not-allowed/        shown for the wrong role
-    tap/                opened by the NFC tag, verifies and stamps (later)
+    tap/                opened by the NFC tag: verifies and stamps; complete/ after sign-in; problem/
     staff/              coupon scanner and redeem (protected)
     admin/              dashboard: overview, customers, tags, settings (protected)
     api/redeem/         redeem a coupon (staff only)
     api/export/         CSV export (admins only)
-    api/                stamp (later)
   components/           (staff/: QR scanner, redeem button; admin/: nav, tiles, chart, forms)
   lib/
     supabase/           clients (user, service role) and database types
     auth.ts             current user, profile, role checks
     admin.ts            data for the admin pages
     card-data.ts        loads the customer's card (database or mock)
-    nfc/                tag signing and verification (later)
+    nfc/                NTAG 424 SUN verification, key derivation, waiting-tap cookie
     coupons.ts          coupon QR code
     coupon-code.ts      reading a code from a scan or typed input
     stamping.ts         adds a stamp through record_stamp
@@ -346,13 +398,13 @@ once it is tested:
 | ----- | ------------------------ | -------------------------------------------------- |
 | 1     | `feat/landing-page`      | Front end with mock data: card, coupon, how it works, EL/EN |
 | 2     | `feat/database-auth`     | Supabase schema, RLS, magic-link sign-in, protected areas |
-| 3     | `feat/tag-verification`  | Signed NFC tag URLs, `/tap` route, stamp API       |
+| 3     | `feat/tag-verification`  | NTAG 424 tap verification, `/tap`, tag tools       |
 | 4     | `feat/customer-coupon`   | Stamping rules, coupon issuing, real QR codes      |
 | 5     | `feat/staff-scanner`     | `/staff` scanner and redeem API                    |
 | 6     | `feat/admin-dashboard`   | `/admin` stats, customers, tags, export            |
 
-Every pull request runs CI (`.github/workflows/ci.yml`): typecheck,
-production build, and the database migrations and RLS tests. Merge only when
+Every pull request runs CI (`.github/workflows/ci.yml`): typecheck, unit
+tests, production build, and the database migrations and tests. Merge only when
 it is green.
 
 Commit messages use a short prefix: `feat:`, `fix:`, `chore:`, `docs:`,
@@ -371,7 +423,7 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 | `CAFE_SLUG`                      | Which cafe this site serves. Defaults to `coffee-pause-cyprus` |
 | `MOCK_DATA`                      | `1` to preview mock card states on the dev server |
 | `DEV_STAMPS`                     | `1` to show the "Add a test stamp" button on the dev server |
-| `NFC_TAG_SECRET`                 | Signs and verifies NFC tag URLs (later step)      |
+| `NFC_TAG_SECRET`                 | Every NFC tag key is derived from it. Server only; `openssl rand -hex 32` |
 | `TEST_DATABASE_URL`              | Throwaway Postgres for `npm run test:db` (not used by the app) |
 
 `NEXT_PUBLIC_*` values are built into the app, so set them before
