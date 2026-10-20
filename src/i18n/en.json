@@ -153,7 +153,94 @@
   },
   "admin": {
     "title": "Admin",
-    "placeholder": "The admin dashboard comes in a later step."
+    "nav": {
+      "label": "Admin menu",
+      "overview": "Overview",
+      "customers": "Customers",
+      "tags": "NFC tags",
+      "settings": "Settings"
+    },
+    "kpi": {
+      "customers": "Customers",
+      "stampsToday": "Stamps today",
+      "stamps7d": "Stamps, last 7 days",
+      "couponsValid": "Active coupons",
+      "couponsRedeemed": "Coupons redeemed",
+      "couponsIssued": "of {count} issued"
+    },
+    "chart": {
+      "title": "Stamps per day",
+      "subtitle": "Last 30 days",
+      "tooltip_one": "{date}: {count} stamp",
+      "tooltip_other": "{date}: {count} stamps",
+      "showTable": "Show the numbers as a table",
+      "day": "Day",
+      "stamps": "Stamps",
+      "redeemed": "Redeemed",
+      "empty": "No stamps yet."
+    },
+    "activity": {
+      "title": "Latest activity",
+      "empty": "No activity yet.",
+      "stamp": "Stamp",
+      "coupon_issued": "New coupon",
+      "redeemed": "Redeemed"
+    },
+    "customers": {
+      "title": "Customers",
+      "search": "Search email or name",
+      "searchSubmit": "Search",
+      "count_one": "{count} customer",
+      "count_other": "{count} customers",
+      "email": "Email",
+      "name": "Name",
+      "card": "Card",
+      "lifetime": "Lifetime stamps",
+      "coupons": "Coupons (active / used)",
+      "lastStamp": "Last stamp",
+      "never": "Never",
+      "empty": "No customers found.",
+      "export": "Export",
+      "exportCustomers": "Customers (CSV)",
+      "exportStamps": "Stamps, last 90 days (CSV)"
+    },
+    "tags": {
+      "title": "NFC tags",
+      "intro": "Every tag staff use to give stamps. Deactivate a tag if it gets lost.",
+      "label": "Name",
+      "labelPlaceholder": "e.g. Maria's keychain",
+      "uid": "Tag UID",
+      "uidPlaceholder": "e.g. 04A1B2C3D4E5F6",
+      "uidHelp": "The tag's serial number, printed on it or shown in an NFC app.",
+      "add": "Add tag",
+      "active": "Active",
+      "inactive": "Inactive",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "added": "Added {date}",
+      "empty": "No tags yet.",
+      "errors": {
+        "label": "Give the tag a name (up to 60 characters).",
+        "uid": "The UID must be 8 to 20 hex characters (0-9, A-F).",
+        "duplicate": "A tag with this UID already exists.",
+        "failed": "It wasn't saved. Try again."
+      },
+      "saved": "Tag saved."
+    },
+    "settings": {
+      "title": "Cafe settings",
+      "intro": "Changes apply to the next stamps and new coupons.",
+      "stampsRequired": "Stamps for a free coffee",
+      "couponDays": "Coupon lasts (days)",
+      "cooldown": "Wait between stamps (minutes)",
+      "cooldownHelp": "Stops one coffee from being stamped twice.",
+      "save": "Save",
+      "saved": "Settings saved.",
+      "errors": {
+        "invalid": "Check the values: stamps 1–50, days 1–730, minutes 0–1440.",
+        "failed": "They weren't saved. Try again."
+      }
+    }
   },
   "stamp": {
     "cooldown_one": "You were just stamped. You can get the next one in {count} minute.",
