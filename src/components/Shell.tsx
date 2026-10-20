@@ -21,18 +21,23 @@ export async function Shell({
   t,
   active,
   state,
+  wide = false,
   children,
 }: {
   t: Translator;
   /** Highlighted nav tab; omitted on pages outside the main nav (login etc.). */
   active?: Page;
   state?: string;
+  /** Wider column for admin tables on larger screens. */
+  wide?: boolean;
   children: React.ReactNode;
 }) {
   const preview = isMockMode();
   const signedIn = !preview && !!(await getUser());
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-4 sm:max-w-lg">
+    <div
+      className={`mx-auto flex min-h-dvh w-full flex-col overflow-x-clip px-4 ${wide ? "max-w-md sm:max-w-3xl" : "max-w-md sm:max-w-lg"}`}
+    >
       <header className="flex items-center justify-between gap-4 pt-5 pb-3">
         <Link
           href={withState("/", state)}

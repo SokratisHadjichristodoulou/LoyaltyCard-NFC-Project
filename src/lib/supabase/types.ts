@@ -6,6 +6,17 @@ export type Language = "el" | "en";
 export type CouponStatus = "valid" | "used" | "expired";
 export type RedeemResult = "redeemed" | "already_used" | "expired" | "not_found" | "not_allowed";
 
+export type AdminStats = {
+  customers: number;
+  stamps_total: number;
+  stamps_today: number;
+  stamps_7d: number;
+  coupons_issued: number;
+  coupons_redeemed: number;
+  coupons_valid: number;
+  daily: { day: string; stamps: number; redeemed: number }[];
+};
+
 type Table<Row, Required extends keyof Row = never> = {
   Row: Row;
   Insert: Partial<Row> & Pick<Row, Required>;
@@ -72,6 +83,32 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      admin_customers: {
+        Args: Record<string, never>;
+        Returns: {
+          customer_id: string;
+          email: string;
+          display_name: string | null;
+          stamp_count: number;
+          stamps_total: number;
+          coupons_valid: number;
+          coupons_used: number;
+          last_stamp_at: string | null;
+          joined_at: string;
+        }[];
+      };
+      admin_stats: {
+        Args: { p_days?: number; p_tz?: string };
+        Returns: AdminStats | null;
+      };
+      admin_activity: {
+        Args: { p_limit?: number };
+        Returns: { kind: "stamp" | "coupon_issued" | "redeemed"; at: string; email: string; detail: string | null }[];
+      };
+      admin_stamp_log: {
+        Args: { p_since?: string };
+        Returns: { stamped_at: string; email: string; display_name: string | null; tag_label: string | null }[];
+      };
       redeem_coupon: {
         Args: { p_code: string; p_staff_id: string };
         Returns: {
