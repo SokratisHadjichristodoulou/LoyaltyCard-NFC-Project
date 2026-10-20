@@ -16,6 +16,8 @@
   --color-gold-light: #efc874;
   --color-gold-ink: #86591a;
   --color-ink: #74280f;
+  /* Chart marks: checked for lightness, chroma and contrast on crema */
+  --color-chart: #9c5a26;
   --color-olive: #4f5d3a;
   --color-olive-soft: #e3e6d3;
   --color-berry: #8a2f2a;
