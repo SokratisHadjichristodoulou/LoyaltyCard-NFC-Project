@@ -4,6 +4,7 @@
 export type Role = "customer" | "staff" | "admin";
 export type Language = "el" | "en";
 export type CouponStatus = "valid" | "used" | "expired";
+export type RedeemResult = "redeemed" | "already_used" | "expired" | "not_found" | "not_allowed";
 
 type Table<Row, Required extends keyof Row = never> = {
   Row: Row;
@@ -71,6 +72,16 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      redeem_coupon: {
+        Args: { p_code: string; p_staff_id: string };
+        Returns: {
+          result: RedeemResult;
+          code: string | null;
+          issued_at: string | null;
+          expires_at: string | null;
+          redeemed_at: string | null;
+        }[];
+      };
       record_stamp: {
         Args: { p_cafe_id: string; p_customer_id: string; p_tag_id?: string | null };
         Returns: {
