@@ -29,3 +29,9 @@ export const supabaseServiceRoleKey = () => required("SUPABASE_SERVICE_ROLE_KEY"
 
 /** Which cafe this deployment serves (cafes.slug). */
 export const cafeSlug = () => process.env.CAFE_SLUG || "coffee-pause-cyprus";
+
+/** Secret all NFC tag keys are derived from. Never sent to the browser. */
+export function nfcTagSecret() {
+  const value = process.env.NFC_TAG_SECRET;
+  return value && value.length >= 32 ? value : null;
+}

@@ -48,6 +48,12 @@ export default async function AdminTagsPage() {
                 <p className="text-xs text-muted">
                   <span className="font-mono">{tag.tag_uid}</span>
                   <span className="whitespace-nowrap"> · {t("admin.tags.added", { date: date.format(new Date(tag.created_at)) })}</span>
+                  <span className="whitespace-nowrap">
+                    {" · "}
+                    {tag.last_tap_at
+                      ? t("admin.tags.lastTap", { date: date.format(new Date(tag.last_tap_at)) })
+                      : t("admin.tags.neverTapped")}
+                  </span>
                 </p>
               </div>
               <span

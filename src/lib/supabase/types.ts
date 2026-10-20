@@ -52,6 +52,7 @@ export type Database = {
         staff_id: string | null;
         active: boolean;
         last_counter: number;
+        last_tap_at: string | null;
         created_at: string;
       }, "cafe_id" | "label" | "tag_uid">;
       cards: Table<{
@@ -83,6 +84,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      consume_tag_tap: {
+        Args: { p_uid: string; p_counter: number };
+        Returns: { result: "ok" | "unknown_tag" | "inactive" | "replayed"; tag_id: string | null; cafe_id: string | null }[];
+      };
       admin_customers: {
         Args: Record<string, never>;
         Returns: {
@@ -120,9 +125,9 @@ export type Database = {
         }[];
       };
       record_stamp: {
-        Args: { p_cafe_id: string; p_customer_id: string; p_tag_id?: string | null };
+        Args: { p_cafe_id: string; p_customer_id: string; p_tag_id?: string | null; p_tag_counter?: number | null };
         Returns: {
-          result: "stamped" | "coupon_issued" | "cooldown";
+          result: "stamped" | "coupon_issued" | "cooldown" | "duplicate";
           stamp_count: number;
           stamps_required: number;
           coupon_code: string | null;

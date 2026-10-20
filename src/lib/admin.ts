@@ -37,7 +37,7 @@ export async function loadTags() {
   const { profile, supabase } = await adminClient();
   const { data, error } = await supabase
     .from("tags")
-    .select("id, label, tag_uid, active, created_at")
+    .select("id, label, tag_uid, active, created_at, last_tap_at")
     .eq("cafe_id", profile.cafe_id!)
     .order("created_at", { ascending: false });
   if (error) throw error;

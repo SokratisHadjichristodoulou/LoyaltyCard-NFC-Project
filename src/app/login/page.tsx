@@ -3,6 +3,7 @@ import { getT } from "@/i18n/server";
 import { getUser, safeNext } from "@/lib/auth";
 import { Shell } from "@/components/Shell";
 import { LoginForm } from "@/components/LoginForm";
+import { TAP_COMPLETE_PATH } from "@/lib/nfc/paths";
 
 type Props = { searchParams: Promise<{ next?: string; error?: string; signed_out?: string }> };
 
@@ -18,6 +19,11 @@ export default async function LoginPage({ searchParams }: Props) {
   return (
     <Shell t={t}>
       <h1 className="font-display text-[2.4rem] leading-none font-medium tracking-tight">{t("login.title")}</h1>
+      {next === TAP_COMPLETE_PATH && (
+        <p role="status" className="mt-4 rounded-xl bg-gold/20 px-4 py-3 text-sm leading-relaxed text-espresso ring-1 ring-gold/40">
+          {t("tap.signInToCollect")}
+        </p>
+      )}
       <p className="mt-3 max-w-[34ch] text-roast">{t("login.intro")}</p>
 
       {params.signed_out && (
