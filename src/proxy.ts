@@ -48,7 +48,7 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     const login = new URL("/login", request.url);
-    login.searchParams.set("next", request.nextUrl.pathname);
+    login.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
     return withCookies(NextResponse.redirect(login));
   }
 
