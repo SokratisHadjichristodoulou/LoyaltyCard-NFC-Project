@@ -18,8 +18,13 @@ const PICC_DATA_TAG = 0xc7;
 // AES-CMAC (RFC 4493)
 // ---------------------------------------------------------------------------
 
+/**
+ * AES-128 on a single 16-byte block. Written as CBC with a zero IV, which is
+ * identical to ECB for one block, because Cloudflare Workers' node:crypto
+ * doesn't support aes-128-ecb.
+ */
 function aesEcbEncrypt(key: Buffer, block: Buffer) {
-  const cipher = createCipheriv("aes-128-ecb", key, null);
+  const cipher = createCipheriv("aes-128-cbc", key, ZERO_IV);
   cipher.setAutoPadding(false);
   return Buffer.concat([cipher.update(block), cipher.final()]);
 }

@@ -80,3 +80,11 @@ describe("keys derived from NFC_TAG_SECRET", () => {
     expect(() => tagKeys("short", "04A1B2C3D4E5F6")).toThrow();
   });
 });
+
+describe("runs on Cloudflare Workers", () => {
+  it("doesn't use aes-128-ecb (Workers' node:crypto rejects it at runtime)", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync(new URL("./sdm.ts", import.meta.url), "utf8");
+    expect(source).not.toContain(`"aes-128-ecb"`);
+  });
+});
