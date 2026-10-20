@@ -183,6 +183,26 @@ database function checks the role again, finds coupons only from the staff
 member's own cafe, and locks the coupon row, so a coupon is redeemed at most
 once even if two baristas press at the same moment.
 
+### Admin dashboard
+
+`/admin` is for admins only (see "Make yourself admin"). It has four sections:
+
+- **Overview**: customers, stamps today and over 7 days, coupons redeemed out of
+  issued, a 30-day stamps-per-day chart (hover a bar for the number, or open the
+  table under it) and the latest activity.
+- **Customers**: every customer with a card, with search, current and lifetime
+  stamps, active and used coupons, and last visit. Export customers or the last
+  90 days of stamps as CSV (opens in Excel, Greek included).
+- **NFC tags**: add a tag by name and UID (colons and lower case are cleaned
+  up), and deactivate one that gets lost. The NFC step uses these tags.
+- **Settings**: stamps for a free coffee, how long coupons last, and the wait
+  between stamps. Changes apply to the next stamps and new coupons.
+
+Reports come from database functions (`admin_stats`, `admin_customers`,
+`admin_activity`, `admin_stamp_log`) that return only the caller's own cafe
+and only to admins. Tag and settings changes are server actions that check
+the admin role and then write with the service role, limited to that cafe.
+
 ### Database tests
 
 `supabase/tests/rls.test.sql` proves the access rules: it signs in as
@@ -190,7 +210,9 @@ different customers, staff and admins and checks what each can read and
 write. `supabase/tests/stamps.test.sql` proves the stamping rules: cooldown,
 coupon at 10, the card starting again, and that only the server can stamp.
 `supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
-same cafe, once only, never an expired coupon.
+same cafe, once only, never an expired coupon. `supabase/tests/admin.test.sql`
+proves the admin reports: right numbers for the admin's cafe, and nothing for
+staff, customers, signed-out visitors or admins of other cafes.
 `npm run test:db` runs every migration twice (to prove they are
 re-runnable), then the seed and the tests, on a throwaway database. It runs in
 CI on every pull request.
@@ -225,7 +247,7 @@ the errors.
 | `/staff`  | staff, admin    | redirect to login (keeps `?code=`) | "not allowed" page (403) |
 | `/admin`  | admin           | redirect to login  | "not allowed" page (403)   |
 
-Both pages check the role again on the server. `/admin` is a placeholder for now.
+Both areas check the role again on the server.
 
 ## Preview card states (mock data)
 
@@ -266,7 +288,6 @@ missing from `en.json` fails the typecheck.
 | What                                              | Comes in                  |
 | ------------------------------------------------- | ------------------------- |
 | NFC tap verification: stamps come from the dev-only test button for now | `feat/tag-verification` |
-| Admin dashboard and export (`/admin` is a placeholder) | `feat/admin-dashboard` |
 | Customer display name: no screen to set it yet, so the greeting has no name | later step |
 | Custom SMTP for sign-in emails                    | before launch             |
 | Real logo file                                    | when provided             |
@@ -290,13 +311,15 @@ src/
     not-allowed/        shown for the wrong role
     tap/                opened by the NFC tag, verifies and stamps (later)
     staff/              coupon scanner and redeem (protected)
-    admin/              dashboard (protected, placeholder)
+    admin/              dashboard: overview, customers, tags, settings (protected)
     api/redeem/         redeem a coupon (staff only)
-    api/                stamp, export (later)
-  components/           (staff/: QR scanner, redeem button)
+    api/export/         CSV export (admins only)
+    api/                stamp (later)
+  components/           (staff/: QR scanner, redeem button; admin/: nav, tiles, chart, forms)
   lib/
     supabase/           clients (user, service role) and database types
     auth.ts             current user, profile, role checks
+    admin.ts            data for the admin pages
     card-data.ts        loads the customer's card (database or mock)
     nfc/                tag signing and verification (later)
     coupons.ts          coupon QR code
