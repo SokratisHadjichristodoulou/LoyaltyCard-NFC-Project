@@ -84,6 +84,10 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      applied_migrations: {
+        Args: Record<string, never>;
+        Returns: string[];
+      };
       consume_tag_tap: {
         Args: { p_uid: string; p_counter: number };
         Returns: { result: "ok" | "unknown_tag" | "inactive" | "replayed"; tag_id: string | null; cafe_id: string | null }[];
