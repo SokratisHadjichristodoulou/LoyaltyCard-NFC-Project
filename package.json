@@ -11,7 +11,10 @@
     "test": "vitest run",
     "nfc:keys": "tsx --env-file-if-exists=.env.local scripts/nfc-keys.ts",
     "nfc:url": "tsx --env-file-if-exists=.env.local scripts/nfc-tap-url.ts",
-    "db:check": "tsx --env-file-if-exists=.env.local scripts/db-check.ts"
+    "db:check": "tsx --env-file-if-exists=.env.local scripts/db-check.ts",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -24,6 +27,7 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.12",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.6.5",
     "@types/qrcode": "^1.5.6",
@@ -33,7 +37,8 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "wrangler": "^4.151.3"
   },
   "engines": {
     "node": ">=20.9"
