@@ -11,8 +11,8 @@ function greetingKey() {
   const hour = Number(
     new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: "Europe/Nicosia" }).format(new Date()),
   );
-  if (hour < 12) return "greeting.morning" as const;
-  if (hour < 17) return "greeting.afternoon" as const;
+  if (hour >= 5 && hour < 12) return "greeting.morning" as const;
+  if (hour >= 12 && hour < 17) return "greeting.afternoon" as const;
   return "greeting.evening" as const;
 }
 
