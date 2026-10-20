@@ -59,10 +59,10 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
                 ) : isFree ? (
                   <span aria-hidden className="flex size-full flex-col items-center justify-center rounded-full border-[1.5px] border-dashed border-caramel bg-foam/70 text-caramel-ink">
                     <CupGlyph className="size-[46%]" />
-                    <span className="mt-px text-[0.52rem] font-bold tracking-[0.12em] uppercase">{t("card.freeSlot")}</span>
+                    <span className="mt-px text-[clamp(0.4rem,1.7vw,0.52rem)] font-bold tracking-[0.06em] uppercase min-[400px]:tracking-[0.12em]">{t("card.freeSlot")}</span>
                   </span>
                 ) : (
-                  <span aria-hidden className="flex size-full items-center justify-center rounded-full border-[1.5px] border-dashed border-line font-display text-lg text-muted/70 italic tabular">
+                  <span aria-hidden className="flex size-full items-center justify-center rounded-full border-[1.5px] border-dashed border-line font-display text-lg text-muted italic tabular">
                     {n}
                   </span>
                 )}

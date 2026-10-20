@@ -27,7 +27,7 @@ export function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 sm:max-w-lg">
+    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col overflow-x-clip px-4 sm:max-w-lg">
       <header className="flex items-center justify-between gap-4 pt-5 pb-3">
         <Link
           href={withState("/", state)}
@@ -50,11 +50,11 @@ export function Shell({
           {pages.map((p) => {
             const current = p.id === active;
             return (
-              <li key={p.id} className="flex-1">
+              <li key={p.id} className="flex-auto">
                 <Link
                   href={withState(p.path, state)}
                   aria-current={current ? "page" : undefined}
-                  className={`relative flex min-h-12 items-center justify-center px-1 text-center text-[0.9rem] font-medium transition-colors ${
+                  className={`relative flex min-h-12 items-center justify-center px-1.5 text-center whitespace-nowrap text-[0.8rem] leading-tight font-medium min-[360px]:text-[0.9rem] transition-colors ${
                     current ? "text-espresso" : "text-muted hover:text-espresso"
                   }`}
                 >

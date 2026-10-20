@@ -27,7 +27,7 @@ export function PreviewBar({
             <Link
               href={withState(paths[active], name)}
               aria-current={name === current ? "true" : undefined}
-              className={`inline-flex min-h-9 items-center rounded-full px-3 font-mono text-xs ${
+              className={`inline-flex min-h-11 items-center rounded-full px-3.5 font-mono text-xs ${
                 name === current ? "bg-espresso text-paper" : "bg-foam text-roast hover:text-espresso"
               }`}
             >
