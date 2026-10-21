@@ -1,0 +1,34 @@
+name: Deploy
+
+# Every push to main (a merged pull request) deploys the site to Cloudflare
+# Workers. See README, Deploying.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run cf:deploy
+        env:
+          # Built into the app, so they belong to the build.
+          NEXT_PUBLIC_SITE_URL: https://loyaltycard.coffeepause.app
+          NEXT_PUBLIC_SUPABASE_URL: https://nkqecvrawxrvuqtghmwj.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: 1873db0d35781834cc3b0c3c6c479344
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

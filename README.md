@@ -428,8 +428,9 @@ supabase/
 ## Deploying
 
 The site is hosted on **Cloudflare Workers** (via `@opennextjs/cloudflare`):
-the free plan allows commercial use. Each merge to `main` deploys
-automatically through Workers Builds.
+the free plan allows commercial use. Live at
+`https://loyaltycard.coffeepause.app`. Each merge to `main` deploys
+automatically through GitHub Actions (`.github/workflows/deploy.yml`).
 
 One caveat: the adapter marks Next.js "proxy" (our `src/proxy.ts`) as
 experimental on Workers. Every flow passed in Cloudflare's local runtime
@@ -448,26 +449,29 @@ live site too.
    `NEXT_PUBLIC_SITE_URL` (`https://card.coffeepause.com.cy`), `NFC_TAG_SECRET`,
    and `CAFE_SLUG` if not the default. Don't set `MOCK_DATA` or `DEV_STAMPS`.
 
-### Connect the repo (Workers Builds)
+### Automatic deploys (GitHub Actions)
 
-1. Cloudflare dashboard → **Workers & Pages → Create → Import a repository**
-   → connect GitHub and pick this repo.
-2. Project name: `coffee-pause-card` (must match `name` in `wrangler.jsonc`).
-   Build command: `npx opennextjs-cloudflare build`. Deploy command:
-   `npx opennextjs-cloudflare deploy`.
-3. **Build variables**: the three `NEXT_PUBLIC_*` values. They are built
-   into the app, so they belong to the build, not the runtime.
-4. Save and deploy. Then, on the Worker:
-   - **Settings → Variables and Secrets**: add `SUPABASE_SERVICE_ROLE_KEY`,
-     `NFC_TAG_SECRET` (and `CAFE_SLUG`, if used), each as type **Secret**.
-     Secrets survive every deploy; plain-text variables set here would be
-     replaced by `wrangler.jsonc` on the next one.
-   - **Settings → Build → Branch control**: turn off builds for
-     non-production branches, so pull requests don't deploy against the live
-     database.
-   - **Settings → Domains & Routes → Add → Custom domain**: the subdomain.
-5. **Deployments → Retry deployment** (or merge anything to `main`) so the
-   first live version runs with the secrets.
+`.github/workflows/deploy.yml` runs on every push to `main` (and by hand from
+**Actions → Deploy → Run workflow**): typecheck, unit tests, then
+`npm run cf:deploy` to the Worker `coffee-pause-card` (must match `name` in
+`wrangler.jsonc`). Pull requests never deploy.
+
+The site URL, Supabase URL and Cloudflare account ID are in the workflow. In
+GitHub, **Settings → Secrets and variables → Actions → New repository
+secret**, add:
+
+- `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the "Edit Cloudflare
+  Workers" template, limited to this account and the `coffeepause.app` zone
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: the Supabase `anon` key
+
+On the Worker in Cloudflare (set once, kept by every deploy):
+
+- **Settings → Variables and Secrets**: `SUPABASE_SERVICE_ROLE_KEY`,
+  `NFC_TAG_SECRET` (and `CAFE_SLUG`, if used), each as type **Secret**.
+  Plain-text variables set here would be replaced by `wrangler.jsonc` on the
+  next deploy.
+- **Settings → Domains & Routes**: the custom domain
+  `loyaltycard.coffeepause.app`.
 
 From then on, merging a pull request into `main` is a release.
 
@@ -508,7 +512,8 @@ deploys straight away, so do these in order, steps 1 and 2 before merging:
    `npm run db:check`; it must say "Database is up to date".
 2. **Settings**: add any new environment variables the pull request lists
    (`.env.local` locally, and on the Worker in Cloudflare).
-3. **Then merge**: Workers Builds deploys the new `main`.
+3. **Then merge**: the Deploy workflow deploys the new `main` (watch it under
+   **Actions**).
 
 New code against an old database fails (e.g. stamping or the admin pages).
 Each pull request ends with an "After merge" list of exactly these steps.
