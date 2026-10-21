@@ -4,11 +4,13 @@ import { checkSchema } from "@/lib/schema-check";
 
 export type AdminSection = "overview" | "customers" | "tags" | "settings";
 
-const sections: { id: AdminSection; href: string }[] = [
+// "scanner" leaves the admin for the staff scanner, which admins can use too.
+const sections: { id: AdminSection | "scanner"; href: string }[] = [
   { id: "overview", href: "/admin" },
   { id: "customers", href: "/admin/customers" },
   { id: "tags", href: "/admin/tags" },
   { id: "settings", href: "/admin/settings" },
+  { id: "scanner", href: "/staff" },
 ];
 
 export function AdminNav({ t, active }: { t: Translator; active: AdminSection }) {
