@@ -2,11 +2,11 @@
 // empty values show as "[to be completed]".
 export const cafeInfo = {
   /** Registered name of the business that runs the loyalty card, e.g. "Coffee Pause Ltd". */
-  legalName: "",
+  legalName: "Coffee Pause Cyprus LTD",
   /** Registered address. */
-  address: "",
+  address: "Eleftheriou Venizelou 64, 8021 Paphos, Cyprus",
   /** Where customers send privacy questions and requests. */
-  email: "",
+  email: "menelaosstokkos8@gmail.com",
   /** Date the privacy notice last changed (YYYY-MM-DD). */
-  lastUpdated: "2026-10-21",
+  lastUpdated: "2026-10-22",
 };
