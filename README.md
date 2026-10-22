@@ -357,8 +357,8 @@ missing from `en.json` fails the typecheck.
 
 ## Brand
 
-- Logo: `public/logo.png` (currently a placeholder; replace with the real logo,
-  square, at least 256×256).
+- Logo: `public/logo.png`, the real Coffee Pause logo: 512×512, round, with
+  transparent corners (it is also the browser icon and the logo in the emails).
 - Colors: taken from the logo (deep reddish-brown `#3a1609` and warm gold
   `#d6a24e` on cream). Tokens live at the top of `src/styles/globals.css`;
   components only use these tokens.
@@ -369,9 +369,7 @@ missing from `en.json` fails the typecheck.
 | What                                              | Comes in                  |
 | ------------------------------------------------- | ------------------------- |
 | Programming and testing real NTAG 424 tags on iPhone and Android | when the tags arrive |
-| Business legal name, address and email on the privacy page (`src/lib/cafe-info.ts`) | before launch |
-| Custom SMTP for sign-in emails                    | before launch             |
-| Real logo file                                    | when provided             |
+| Privacy contact email on the privacy page (`src/lib/cafe-info.ts`) | before launch |
 | Mock data and preview bar (dev only, `MOCK_DATA=1`) | removed in a later step |
 
 ## Project structure
