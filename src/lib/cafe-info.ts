@@ -6,7 +6,7 @@ export const cafeInfo = {
   /** Registered address. */
   address: "Eleftheriou Venizelou 64, 8021 Paphos, Cyprus",
   /** Where customers send privacy questions and requests. */
-  email: "",
+  email: "menelaosstokkos8@gmail.com",
   /** Date the privacy notice last changed (YYYY-MM-DD). */
   lastUpdated: "2026-10-22",
 };

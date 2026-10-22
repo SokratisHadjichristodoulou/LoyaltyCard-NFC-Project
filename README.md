@@ -369,7 +369,6 @@ missing from `en.json` fails the typecheck.
 | What                                              | Comes in                  |
 | ------------------------------------------------- | ------------------------- |
 | Programming and testing real NTAG 424 tags on iPhone and Android | when the tags arrive |
-| Privacy contact email on the privacy page (`src/lib/cafe-info.ts`) | before launch |
 | Mock data and preview bar (dev only, `MOCK_DATA=1`) | removed in a later step |
 
 ## Project structure
