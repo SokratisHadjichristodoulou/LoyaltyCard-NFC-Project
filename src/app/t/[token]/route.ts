@@ -34,13 +34,18 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.redirect(origin + outcomePath(outcome));
   }
 
-  // Signed out: keep the tap for a few minutes while they sign in.
+  // Signed out: keep the tap for a few minutes while they sign in. It goes in
+  // a cookie and also in the sign-in link, so it survives the email opening
+  // in another browser (e.g. inside the Gmail app). Reusing it can't give more
+  // than the tag's own link already does: one stamp per day.
   const secret = nfcTagSecret();
   if (!secret) return NextResponse.redirect(`${origin}/tap/problem?r=not_configured`);
-  const response = NextResponse.redirect(`${origin}/login?next=${encodeURIComponent(TAP_COMPLETE_PATH)}`);
+  const pending = signPendingTap(secret, { tagId: tag.id, counter: null, expiresAt: Date.now() + PENDING_TAP_MINUTES * 60_000 });
+  const next = `${TAP_COMPLETE_PATH}?p=${pending}`;
+  const response = NextResponse.redirect(`${origin}/login?next=${encodeURIComponent(next)}`);
   response.cookies.set(
     PENDING_TAP_COOKIE,
-    signPendingTap(secret, { tagId: tag.id, counter: null, expiresAt: Date.now() + PENDING_TAP_MINUTES * 60_000 }),
+    pending,
     {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
