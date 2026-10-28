@@ -3,10 +3,15 @@ import { cookies } from "next/headers";
 import { getT } from "@/i18n/server";
 import { Shell } from "@/components/Shell";
 import { CupGlyph } from "@/components/Stamp";
+import { CodeForm } from "@/components/CodeForm";
+import { safeNext } from "@/lib/auth";
 import { LOGIN_EMAIL_COOKIE } from "../constants";
 
-export default async function CheckEmailPage() {
+type Props = { searchParams: Promise<{ next?: string }> };
+
+export default async function CheckEmailPage({ searchParams }: Props) {
   const t = await getT();
+  const next = safeNext((await searchParams).next);
   const email = (await cookies()).get(LOGIN_EMAIL_COOKIE)?.value;
 
   return (
@@ -22,6 +27,13 @@ export default async function CheckEmailPage() {
         <p className="mx-auto mt-3 max-w-[32ch] leading-relaxed text-roast">
           {email ? t("checkEmail.body", { email }) : t("checkEmail.bodyNoEmail")}
         </p>
+      </div>
+
+      <div className="mt-6">
+        <CodeForm
+          next={next}
+          labels={{ code: t("checkEmail.codeLabel"), submit: t("checkEmail.codeSubmit"), errors: t.messages.checkEmail.codeErrors }}
+        />
       </div>
 
       <ul className="mt-6 grid gap-2 text-sm text-roast">
