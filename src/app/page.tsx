@@ -7,7 +7,7 @@ import { withState } from "@/components/href";
 import { addTestStamp } from "@/app/actions/dev-stamp";
 import { isDevStampEnabled } from "@/lib/env";
 
-type Props = { searchParams: Promise<{ state?: string; stamped?: string; cooldown?: string }> };
+type Props = { searchParams: Promise<{ state?: string; stamped?: string; cooldown?: string; daily?: string }> };
 
 function greetingKey() {
   const hour = Number(
@@ -44,6 +44,12 @@ export default async function HomePage({ searchParams }: Props) {
       {cooldownMinutes > 0 && (
         <p role="status" className="mb-5 rounded-xl bg-foam px-4 py-3 text-sm leading-relaxed text-roast ring-1 ring-line">
           {t.plural("stamp.cooldown", { count: cooldownMinutes })}
+        </p>
+      )}
+
+      {params.daily === "1" && (
+        <p role="status" className="mb-5 rounded-xl bg-foam px-4 py-3 text-sm leading-relaxed text-roast ring-1 ring-line">
+          {t("stamp.daily")}
         </p>
       )}
 

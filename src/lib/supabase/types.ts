@@ -53,6 +53,7 @@ export type Database = {
         active: boolean;
         last_counter: number;
         last_tap_at: string | null;
+        simple_token: string | null;
         created_at: string;
       }, "cafe_id" | "label" | "tag_uid">;
       cards: Table<{
@@ -126,6 +127,16 @@ export type Database = {
           issued_at: string | null;
           expires_at: string | null;
           redeemed_at: string | null;
+        }[];
+      };
+      record_simple_stamp: {
+        Args: { p_cafe_id: string; p_customer_id: string; p_tag_id: string };
+        Returns: {
+          result: "stamped" | "coupon_issued" | "cooldown" | "duplicate" | "daily_limit" | "unknown_tag" | "inactive";
+          stamp_count: number | null;
+          stamps_required: number | null;
+          coupon_code: string | null;
+          retry_after_seconds: number | null;
         }[];
       };
       record_stamp: {

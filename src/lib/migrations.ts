@@ -10,6 +10,7 @@ export const EXPECTED_MIGRATIONS = [
   "20261021000500", // admin reports
   "20261021000600", // NFC tap counters, one stamp per tap
   "20261021000700", // migration tracking
+  "20261028000100", // simple tags (fixed link, one stamp per day)
 ] as const;
 
 export type SchemaStatus =

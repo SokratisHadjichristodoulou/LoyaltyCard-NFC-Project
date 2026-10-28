@@ -4,7 +4,8 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export type PendingTap = { tagId: string; counter: number; expiresAt: number };
+/** counter is null for a simple tag (fixed link, no tap counter). */
+export type PendingTap = { tagId: string; counter: number | null; expiresAt: number };
 
 export const PENDING_TAP_COOKIE = "cp_pending_tap";
 export const PENDING_TAP_MINUTES = 15;
@@ -25,8 +26,8 @@ export function readPendingTap(secret: string, value: string | undefined, now = 
   const given = Buffer.from(sig, "base64url");
   if (given.length !== expected.length || !timingSafeEqual(given, expected)) return null;
   try {
-    const [tagId, counter, expiresAt] = JSON.parse(Buffer.from(payload, "base64url").toString()) as [string, number, number];
-    if (typeof tagId !== "string" || !Number.isInteger(counter) || typeof expiresAt !== "number") return null;
+    const [tagId, counter, expiresAt] = JSON.parse(Buffer.from(payload, "base64url").toString()) as [string, number | null, number];
+    if (typeof tagId !== "string" || !(counter === null || Number.isInteger(counter)) || typeof expiresAt !== "number") return null;
     return expiresAt > now ? { tagId, counter, expiresAt } : null;
   } catch {
     return null;
