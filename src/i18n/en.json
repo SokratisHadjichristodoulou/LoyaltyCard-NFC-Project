@@ -230,7 +230,14 @@
       },
       "saved": "Tag saved.",
       "lastTap": "Last tap {date}",
-      "neverTapped": "Not used yet"
+      "neverTapped": "Not used yet",
+      "simple": "Simple link",
+      "secure": "Secure",
+      "simpleHelp": "Write this link onto the tag with NFC Tools (Write → Add a record → URL). One stamp per customer per day.",
+      "simpleOn": "Use a simple link",
+      "simpleOff": "Switch to secure",
+      "copy": "Copy",
+      "copied": "Copied"
     },
     "settings": {
       "title": "Cafe settings",
@@ -255,7 +262,8 @@
   },
   "stamp": {
     "cooldown_one": "You were just stamped. You can get the next one in {count} minute.",
-    "cooldown_other": "You were just stamped. You can get the next one in {count} minutes."
+    "cooldown_other": "You were just stamped. You can get the next one in {count} minutes.",
+    "daily": "You've already had today's stamp. Come back tomorrow for the next one."
   },
   "couponReady": {
     "title": "You have a free coffee!",

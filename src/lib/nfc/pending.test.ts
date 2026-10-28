@@ -8,6 +8,10 @@ describe("pending tap cookie", () => {
   it("round-trips before it expires", () => {
     expect(readPendingTap(secret, signPendingTap(secret, tap), 1_000_000)).toEqual(tap);
   });
+  it("round-trips a simple tag's tap (no counter)", () => {
+    const simple = { tagId: "tag-2", counter: null, expiresAt: 2_000_000 };
+    expect(readPendingTap(secret, signPendingTap(secret, simple), 1_000_000)).toEqual(simple);
+  });
   it("is refused after it expires", () => {
     expect(readPendingTap(secret, signPendingTap(secret, tap), 2_000_001)).toBeNull();
   });

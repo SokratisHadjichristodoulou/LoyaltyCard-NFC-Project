@@ -3,12 +3,15 @@ import { intlLocale, type Locale } from "@/i18n/config";
 import { loadTags } from "@/lib/admin";
 import { Shell } from "@/components/Shell";
 import { AdminHeader } from "@/components/admin/AdminNav";
+import { CopyLink } from "@/components/admin/CopyLink";
 import { TagForm } from "@/components/admin/TagForm";
-import { setTagActive } from "../actions";
+import { siteOrigin } from "@/lib/site";
+import { setTagActive, setTagSimple } from "../actions";
 
 export default async function AdminTagsPage() {
   const tags = await loadTags();
   const t = await getT();
+  const origin = await siteOrigin();
   const date = new Intl.DateTimeFormat(intlLocale[t.locale as Locale], {
     day: "numeric",
     month: "short",
@@ -43,7 +46,7 @@ export default async function AdminTagsPage() {
         <ul className="mt-6 grid gap-2">
           {tags.map((tag) => (
             <li key={tag.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-line bg-foam/60 px-4 py-3">
-              <div className="min-w-0 flex-1">
+              <div className="w-full min-w-0 sm:w-auto sm:flex-1">
                 <p className="font-semibold">{tag.label}</p>
                 <p className="text-xs text-muted">
                   <span className="font-mono">{tag.tag_uid}</span>
@@ -56,6 +59,9 @@ export default async function AdminTagsPage() {
                   </span>
                 </p>
               </div>
+              <span className="rounded-full bg-line/40 px-2.5 py-0.5 text-xs font-semibold text-roast">
+                {tag.simple_token ? t("admin.tags.simple") : t("admin.tags.secure")}
+              </span>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${tag.active ? "bg-olive-soft text-olive" : "bg-line/60 text-roast"}`}
               >
@@ -68,6 +74,19 @@ export default async function AdminTagsPage() {
                   {tag.active ? t("admin.tags.deactivate") : t("admin.tags.activate")}
                 </button>
               </form>
+              <form action={setTagSimple}>
+                <input type="hidden" name="id" value={tag.id} />
+                <input type="hidden" name="simple" value={tag.simple_token ? "false" : "true"} />
+                <button type="submit" className="min-h-11 rounded-full px-4 text-sm font-semibold text-roast ring-1 ring-line hover:text-espresso">
+                  {tag.simple_token ? t("admin.tags.simpleOff") : t("admin.tags.simpleOn")}
+                </button>
+              </form>
+              {tag.simple_token && (
+                <div className="grid w-full gap-1.5">
+                  <CopyLink url={`${origin}/t/${tag.simple_token}`} label={t("admin.tags.copy")} copiedLabel={t("admin.tags.copied")} />
+                  <p className="text-xs text-muted">{t("admin.tags.simpleHelp")}</p>
+                </div>
+              )}
             </li>
           ))}
         </ul>

@@ -6,7 +6,7 @@ set client_min_messages = notice;  -- show the ok lines
 begin;
 
 set local role service_role;
-select tests.ok((select count(*) = 7 from public.applied_migrations()), 'all 7 migrations are recorded');
+select tests.ok((select count(*) = 8 from public.applied_migrations()), 'all 8 migrations are recorded');
 select tests.ok((select bool_and(v ~ '^\d{14}$') from public.applied_migrations() v), 'versions are the 14-digit file prefixes');
 reset role;
 
