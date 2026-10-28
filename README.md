@@ -245,7 +245,9 @@ can be a simple tag: in **Admin → NFC tags**, press **Use a simple link** and
 write the link shown (`https://card.…/t/<token>`) onto the tag with NFC Tools
 (Write → Add a record → URL). The link never changes, so it could be saved and
 opened away from the cafe; to limit that, a customer gets at most one stamp per
-day from simple tags (`record_simple_stamp`, Cyprus time). If a link leaks,
+day from simple tags (`record_simple_stamp`, Cyprus time). A signed-out
+customer's waiting tap also travels in the sign-in link, so it works even if
+the email opens in another browser (e.g. inside the Gmail app). If a link leaks,
 press **Switch to secure** and then **Use a simple link** again: the old link
 stops working, and the tag needs the new one written. Once the tag is
 programmed as a secure tag, **Switch to secure** is all that's needed.
