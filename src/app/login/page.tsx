@@ -20,7 +20,7 @@ export default async function LoginPage({ searchParams }: Props) {
   return (
     <Shell t={t}>
       <h1 className="font-display text-[2.4rem] leading-none font-medium tracking-tight">{t("login.title")}</h1>
-      {next === TAP_COMPLETE_PATH && (
+      {next.startsWith(TAP_COMPLETE_PATH) && (
         <p role="status" className="mt-4 rounded-xl bg-gold/20 px-4 py-3 text-sm leading-relaxed text-espresso ring-1 ring-gold/40">
           {t("tap.signInToCollect")}
         </p>

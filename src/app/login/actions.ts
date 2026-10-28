@@ -45,5 +45,27 @@ export async function sendMagicLink(_prev: LoginState, formData: FormData): Prom
     maxAge: 60 * 15,
     path: "/login",
   });
-  redirect("/login/check-email");
+  redirect(`/login/check-email?next=${encodeURIComponent(next)}`);
+}
+
+export type CodeState = { error?: "code_invalid" | "code_expired_session"; redirectTo?: string };
+
+/**
+ * Signs in with the 6-digit code from the email, in this same browser. This
+ * keeps the session where the customer tapped the tag, even when their email
+ * app would open the link in a browser of its own.
+ */
+export async function verifyCode(_prev: CodeState, formData: FormData): Promise<CodeState> {
+  const token = String(formData.get("code") ?? "").replace(/\s/g, "");
+  const next = safeNext(String(formData.get("next") ?? ""));
+  const email = (await cookies()).get(LOGIN_EMAIL_COOKIE)?.value;
+  if (!email || !isSupabaseConfigured()) return { error: "code_expired_session" };
+  if (!/^\d{6,10}$/.test(token)) return { error: "code_invalid" };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+  if (error) return { error: "code_invalid" };
+  // A full page load (not a client-side redirect), so a route like
+  // /tap/complete runs and the address bar ends on the card.
+  return { redirectTo: next };
 }
