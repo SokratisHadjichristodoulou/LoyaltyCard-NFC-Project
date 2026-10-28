@@ -10,8 +10,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 /**
  * GET /t/<token>
  * Opened when a simple tag (a fixed link written with any NFC app) is
- * tapped. The link never changes, so record_simple_stamp allows one stamp
- * per customer per day. Secure tags use /tap instead.
+ * tapped. Stamped like any tap, with the cafe's usual wait between stamps.
+ * Secure tags use /tap instead.
  */
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const origin = await siteOrigin();
@@ -37,7 +37,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   // Signed out: keep the tap for a few minutes while they sign in. It goes in
   // a cookie and also in the sign-in link, so it survives the email opening
   // in another browser (e.g. inside the Gmail app). Reusing it can't give more
-  // than the tag's own link already does: one stamp per day.
+  // than the tag's own link already does.
   const secret = nfcTagSecret();
   if (!secret) return NextResponse.redirect(`${origin}/tap/problem?r=not_configured`);
   const pending = signPendingTap(secret, { tagId: tag.id, counter: null, expiresAt: Date.now() + PENDING_TAP_MINUTES * 60_000 });

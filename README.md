@@ -243,14 +243,14 @@ taps for that tag. If a tag is lost, deactivate it in the admin.
 a tool that can load keys; a phone app like NFC Tools can't. Meanwhile any tag
 can be a simple tag: in **Admin → NFC tags**, press **Use a simple link** and
 write the link shown (`https://card.…/t/<token>`) onto the tag with NFC Tools
-(Write → Add a record → URL). The link never changes, so it could be saved and
-opened away from the cafe; to limit that, a customer gets at most one stamp per
-day from simple tags (`record_simple_stamp`, Cyprus time). A signed-out
-customer's waiting tap also travels in the sign-in link, so it works even if
-the email opens in another browser (e.g. inside the Gmail app). If a link leaks,
-press **Switch to secure** and then **Use a simple link** again: the old link
-stops working, and the tag needs the new one written. Once the tag is
-programmed as a secure tag, **Switch to secure** is all that's needed.
+(Write → Add a record → URL). A tap gives a stamp like any other, with the
+cafe's usual wait between stamps. The link never changes, so it could be saved
+and opened away from the cafe: use simple tags only until the reader arrives.
+If a link leaks, press **Switch to secure** and then **Use a simple link**
+again: the old link stops working, and the tag needs the new one written. Once
+the tag is programmed as a secure tag, **Switch to secure** is all that's
+needed. (`record_simple_stamp`, a one-per-day variant, stays in the database
+unused.)
 
 **Testing without a tag.** `npm run nfc:url -- <UID> <counter>` prints a tap URL
 exactly as a programmed tag would (the UID must be registered in the admin).
@@ -308,7 +308,11 @@ Postgres doesn't have (the API roles and `auth.uid()`). It is only for tests.
 ## Sign-in
 
 - `/login`: email form. Supabase emails a magic link; there are no passwords.
-- `/login/check-email`: "check your email" screen.
+- `/login/check-email`: "check your email" screen, with a box for the 6-digit
+  code from the email. Typing the code signs in on the page the customer is
+  already on (where the tag opened), even if their email app would open the
+  link in a browser of its own (e.g. Gmail). The email templates show the code
+  (`{{ .Token }}`), so paste the updated templates into Supabase after a change.
 - `/auth/callback`: where the link lands. It signs the customer in and
   returns them to the page they were trying to open.
 - `/logout`: confirms, then signs out.
