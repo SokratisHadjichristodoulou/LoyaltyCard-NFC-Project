@@ -105,11 +105,17 @@
   },
   "checkEmail": {
     "title": "Check your email",
-    "body": "We sent a sign-in link to {email}. Open it on this phone to see your card.",
-    "bodyNoEmail": "We sent a sign-in link to your email. Open it on this phone to see your card.",
+    "body": "We sent a sign-in email to {email}. Type the code from it below, or tap the button in the email.",
+    "bodyNoEmail": "We sent you a sign-in email. Type the code from it below, or tap the button in the email.",
     "tipSpam": "Can't find it? Check your spam folder.",
-    "tipExpiry": "The link expires in 1 hour and works once.",
-    "retry": "Use a different email"
+    "tipExpiry": "The code and the link expire in 1 hour and work once.",
+    "retry": "Use a different email",
+    "codeLabel": "Code from the email",
+    "codeSubmit": "Sign in",
+    "codeErrors": {
+      "code_invalid": "That code isn't right, or it has expired. Check the latest email and try again.",
+      "code_expired_session": "This page has expired. Ask for a new email."
+    }
   },
   "logout": {
     "title": "Sign out",
