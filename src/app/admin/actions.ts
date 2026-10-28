@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -34,6 +35,15 @@ export async function setTagActive(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const active = formData.get("active") === "true";
   await createAdminClient().from("tags").update({ active }).eq("id", id).eq("cafe_id", profile.cafe_id!);
+  revalidatePath("/admin/tags");
+}
+
+/** Gives a tag a new simple link (any earlier one stops working), or removes it to make the tag secure again. */
+export async function setTagSimple(formData: FormData) {
+  const profile = await requireRole("admin");
+  const id = String(formData.get("id") ?? "");
+  const simple_token = formData.get("simple") === "true" ? randomBytes(16).toString("base64url") : null;
+  await createAdminClient().from("tags").update({ simple_token }).eq("id", id).eq("cafe_id", profile.cafe_id!);
   revalidatePath("/admin/tags");
 }
 

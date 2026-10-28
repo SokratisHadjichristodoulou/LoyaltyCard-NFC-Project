@@ -239,6 +239,17 @@ and the RFC 4493 vectors (`npm test`).
 Keep the `nfc:keys` output private: anyone with a tag's key 2 could make fake
 taps for that tag. If a tag is lost, deactivate it in the admin.
 
+**Simple tags (until there is a USB reader).** Setting up a secure tag needs
+a tool that can load keys; a phone app like NFC Tools can't. Meanwhile any tag
+can be a simple tag: in **Admin → NFC tags**, press **Use a simple link** and
+write the link shown (`https://card.…/t/<token>`) onto the tag with NFC Tools
+(Write → Add a record → URL). The link never changes, so it could be saved and
+opened away from the cafe; to limit that, a customer gets at most one stamp per
+day from simple tags (`record_simple_stamp`, Cyprus time). If a link leaks,
+press **Switch to secure** and then **Use a simple link** again: the old link
+stops working, and the tag needs the new one written. Once the tag is
+programmed as a secure tag, **Switch to secure** is all that's needed.
+
 **Testing without a tag.** `npm run nfc:url -- <UID> <counter>` prints a tap URL
 exactly as a programmed tag would (the UID must be registered in the admin).
 Use a higher counter for each test tap.
