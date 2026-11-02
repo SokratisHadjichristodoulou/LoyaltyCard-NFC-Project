@@ -5,7 +5,7 @@ import { classIdFor, objectIdFor, parseGoogleWalletConfig } from "./google/confi
 import { base64url, importPrivateKey, signJwt } from "./google/jwt";
 import { buildLoyaltyClass, buildLoyaltyObject, saveLinkClaims, themeMessage } from "./google/pass";
 import { orthodoxEaster, themePresets } from "./presets";
-import { activeTheme, currentRunStart, cyprusToday, DEFAULT_THEME, heroImageUrl, textColorOn } from "./themes";
+import { activeTheme, cardPalette, currentRunStart, cyprusToday, DEFAULT_THEME, heroImageUrl, textColorOn } from "./themes";
 
 const theme = (over: Partial<WalletThemeRow>): WalletThemeRow => ({
   id: "t1",
@@ -226,5 +226,21 @@ describe("text colour", () => {
     expect(textColorOn("#7d1d1d")).toBe("#ffffff");
     expect(textColorOn("#f3e6d0")).toBe("#2c1209");
     expect(textColorOn("#ffcc00")).toBe("#2c1209");
+  });
+});
+
+describe("card palette", () => {
+  it("lightens the ink and lines on a dark theme", () => {
+    const p = cardPalette("#7d1d1d");
+    expect(p["--color-crema"]).toBe("#7d1d1d");
+    expect(p["--color-espresso"]).toBe("#fbf6ec");
+    expect(p["--color-ink"]).toBe("#f3e6d0");
+  });
+
+  it("keeps the usual dark ink on a light theme", () => {
+    const p = cardPalette("#f3e6d0");
+    expect(p["--color-crema"]).toBe("#f3e6d0");
+    expect(p).not.toHaveProperty("--color-espresso");
+    expect(p).not.toHaveProperty("--color-ink");
   });
 });

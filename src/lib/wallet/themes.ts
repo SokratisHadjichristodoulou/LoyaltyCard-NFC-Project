@@ -98,6 +98,33 @@ export function activeTheme(themes: WalletThemeRow[], today: string): Theme {
   };
 }
 
+/**
+ * The stamp card's colours in a theme: the site's own colour tokens
+ * (src/styles/globals.css) re-pointed for the theme's background, so every
+ * part of the card follows. Light ink on a dark theme, the usual espresso
+ * ink on a light one.
+ */
+export function cardPalette(background: string): Record<string, string> {
+  const mix = (a: string, share: number, b: string) => `color-mix(in srgb, ${a} ${share}%, ${b})`;
+  if (textColorOn(background) === "#ffffff") {
+    return {
+      "--color-crema": background,
+      "--color-foam": mix(background, 86, "#ffffff"),
+      "--color-line": mix(background, 60, "#ffffff"),
+      "--color-muted": mix("#ffffff", 72, background),
+      "--color-espresso": "#fbf6ec",
+      "--color-gold": "#efc874",
+      "--color-gold-ink": "#efc874",
+      "--color-ink": "#f3e6d0",
+    };
+  }
+  return {
+    "--color-crema": background,
+    "--color-foam": mix(background, 70, "#ffffff"),
+    "--color-line": mix(background, 75, "#3a1609"),
+  };
+}
+
 /** White or dark text, whichever reads better on the theme colour (like Google does on the pass). */
 export function textColorOn(hex: string) {
   const channel = (i: number) => {
