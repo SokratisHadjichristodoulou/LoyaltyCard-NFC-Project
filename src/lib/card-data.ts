@@ -1,7 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { effectiveStatus, type Card, type Coupon } from "./card";
+import { cardNumberFor, effectiveStatus, type Card, type Coupon } from "./card";
 import { cafeSlug, isMockMode } from "./env";
 import { getCard as getMockCard, getScenarioName } from "./mock-data";
 import { getUser } from "./auth";
@@ -50,7 +50,7 @@ const loadCard = cache(async (returnTo: string): Promise<Card> => {
 
   // Everything below is read as the customer, so RLS decides what they see.
   const [{ data: card, error: cardError }, { data: profile }, { data: coupons }] = await Promise.all([
-    supabase.from("cards").select("id, stamp_count").eq("cafe_id", cafe.id).eq("customer_id", user.id).single(),
+    supabase.from("cards").select("id, stamp_count, google_wallet_object_id").eq("cafe_id", cafe.id).eq("customer_id", user.id).single(),
     supabase.from("profiles").select("display_name").eq("id", user.id).single(),
     supabase
       .from("coupons")
@@ -64,11 +64,12 @@ const loadCard = cache(async (returnTo: string): Promise<Card> => {
 
   return {
     customerName: profile?.display_name ?? null,
-    cardNumber: card.id.replace(/-/g, "").slice(0, 4).toUpperCase(),
+    cardNumber: cardNumberFor(card.id),
     stamps: card.stamp_count,
     goal: cafe.stamps_required,
     justStamped: false,
     coupon: pickCoupon(coupons ?? []),
+    inGoogleWallet: card.google_wallet_object_id !== null,
   };
 });
 

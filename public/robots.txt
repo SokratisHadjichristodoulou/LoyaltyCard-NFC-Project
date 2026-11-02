@@ -1,2 +1,4 @@
 User-agent: *
+# Google Wallet loads the pass logo and banners from here.
+Allow: /wallet/
 Disallow: /

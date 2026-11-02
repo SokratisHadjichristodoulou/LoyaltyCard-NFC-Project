@@ -1,0 +1,35 @@
+name: Wallet daily
+
+# Once a day, just after midnight in Cyprus: switches every Google Wallet pass
+# to the day's theme (Christmas, ...) and takes expired coupons off the passes.
+# See README, Google Wallet. Needs the WALLET_CRON_SECRET repository secret
+# (the same value as on the Worker); without it, this does nothing.
+
+on:
+  schedule:
+    - cron: "7 22 * * *" # 00:07 in Cyprus in winter, 01:07 in summer
+  workflow_dispatch:
+
+concurrency:
+  group: wallet-daily
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update the wallet passes
+        env:
+          SITE_URL: https://loyaltycard.coffeepause.app
+          WALLET_CRON_SECRET: ${{ secrets.WALLET_CRON_SECRET }}
+        run: |
+          if [ -z "$WALLET_CRON_SECRET" ]; then
+            echo "WALLET_CRON_SECRET is not set, so there is nothing to do."
+            exit 0
+          fi
+          # Each call handles a batch of expired coupons; repeat while there are more.
+          for i in $(seq 1 20); do
+            body=$(curl -fsS --max-time 60 -X POST -H "Authorization: Bearer $WALLET_CRON_SECRET" "$SITE_URL/api/wallet/daily")
+            echo "$body"
+            echo "$body" | grep -q '"more":true' || exit 0
+          done
