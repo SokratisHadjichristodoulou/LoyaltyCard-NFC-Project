@@ -387,7 +387,7 @@ as you type.
 - **Notify customers when it starts** sends one phone notification to every
   card holder when the theme begins. Google allows only a few notifications
   per pass per day.
-- The same theme shows as a banner above the stamp card on the website.
+- The stamp card on the website takes on the same theme: the banner across its top, the theme's colour, and the greeting at the bottom.
 - Saving, switching off or deleting a theme updates the passes straight away.
   Themes start and end on their dates through the daily job; **Update all
   cards now** does it at once.

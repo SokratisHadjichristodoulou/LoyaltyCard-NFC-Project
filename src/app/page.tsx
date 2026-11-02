@@ -8,7 +8,6 @@ import { withState } from "@/components/href";
 import { addTestStamp } from "@/app/actions/dev-stamp";
 import { isDevStampEnabled } from "@/lib/env";
 import { WalletButtons } from "@/components/wallet/WalletButtons";
-import { ThemeBanner } from "@/components/wallet/ThemeBanner";
 import { isAppleWalletEnabled } from "@/lib/wallet/apple/config";
 import { currentTheme } from "@/lib/wallet/data";
 import { isGoogleWalletEnabled } from "@/lib/wallet/google/config";
@@ -103,9 +102,7 @@ export default async function HomePage({ searchParams }: Props) {
         </Link>
       )}
 
-      {theme.id && <ThemeBanner theme={theme} locale={t.locale} />}
-
-      <StampCard card={card} t={t} />
+      <StampCard card={card} t={t} theme={theme} />
 
       {complete && (
         <div className="rise-in mt-7 text-center" style={{ ["--delay" as string]: "1300ms" }}>

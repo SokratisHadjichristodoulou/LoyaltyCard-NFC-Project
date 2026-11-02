@@ -1,5 +1,6 @@
 import type { Translator } from "@/i18n/translate";
 import type { Card } from "@/lib/card";
+import { cardPalette, heroImageUrl, type Theme } from "@/lib/wallet/themes";
 import { CupGlyph, StampDefs, StampMark } from "./Stamp";
 import { Celebration } from "./Celebration";
 
@@ -7,7 +8,16 @@ import { Celebration } from "./Celebration";
 const TILTS = [-9, 6, -3, 11, -7, 4, -12, 8, -5, 3];
 const tilt = (i: number) => TILTS[i % TILTS.length];
 
-export function StampCard({ card, t }: { card: Card; t: Translator }) {
+/**
+ * The stamp card. With a seasonal theme (Admin → Wallet) the card itself takes
+ * it on: the theme's banner across the top, its colour for the card, and its
+ * greeting in place of the rule at the bottom.
+ */
+export function StampCard({ card, t, theme = null }: { card: Card; t: Translator; theme?: Theme | null }) {
+  const themed = theme?.id ? theme : null;
+  const greeting = themed
+    ? (t.locale === "el" ? themed.message.el || themed.message.en : themed.message.en || themed.message.el)
+    : null;
   const goal = card.goal;
   const filled = Math.min(card.stamps, goal);
   const complete = filled >= goal;
@@ -18,13 +28,25 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
     <section aria-labelledby="card-heading" className="relative">
       <StampDefs />
       <div
-        className={`relative overflow-hidden rounded-[1.75rem] border border-line bg-crema shadow-[0_1px_0_#fff_inset,0_18px_40px_-24px_rgb(58_22_9/0.45),0_2px_6px_-2px_rgb(58_22_9/0.12)] ${
+        className={`relative overflow-hidden rounded-[1.75rem] border border-line bg-crema text-espresso shadow-[0_1px_0_#fff_inset,0_18px_40px_-24px_rgb(58_22_9/0.45),0_2px_6px_-2px_rgb(58_22_9/0.12)] ${
           newestIndex >= 0 ? "card-thud" : ""
         }`}
+        style={themed ? cardPalette(themed.backgroundColor) : undefined}
       >
-        {/* Ticket notches */}
-        <span aria-hidden className="absolute top-[4.6rem] -left-3 size-6 rounded-full border border-line bg-paper" />
-        <span aria-hidden className="absolute top-[4.6rem] -right-3 size-6 rounded-full border border-line bg-paper" />
+        {themed && (
+          <img
+            src={heroImageUrl(themed.heroImage, "")}
+            alt=""
+            width={1032}
+            height={336}
+            className="block aspect-[1032/336] w-full object-cover"
+          />
+        )}
+
+        <div className="relative">
+        {/* Ticket notches, on the dotted line under the header */}
+        <span aria-hidden className="absolute -bottom-3 -left-3 size-6 rounded-full border border-line bg-paper" />
+        <span aria-hidden className="absolute -right-3 -bottom-3 size-6 rounded-full border border-line bg-paper" />
 
         <div className="flex items-end justify-between px-6 pt-5 pb-4">
           <div>
@@ -43,6 +65,7 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
         </div>
 
         <div aria-hidden className="mx-5 border-t-2 border-dotted border-gold/50" />
+        </div>
 
         <ol className="grid grid-cols-5 gap-x-2.5 gap-y-3 px-5 pt-5 pb-4 min-[400px]:gap-x-3.5">
           {Array.from({ length: goal }, (_, i) => {
@@ -73,10 +96,14 @@ export function StampCard({ card, t }: { card: Card; t: Translator }) {
           })}
         </ol>
 
-        <p className="flex items-center justify-center gap-2 border-t border-line/70 bg-foam/60 px-5 py-3 text-xs font-medium tracking-wide text-muted">
-          <CupGlyph className="size-4" />
-          {t("card.rule")}
-        </p>
+        {greeting ? (
+          <p className="border-t border-line/70 bg-foam/60 px-5 py-3 text-center font-display text-lg leading-snug italic">{greeting}</p>
+        ) : (
+          <p className="flex items-center justify-center gap-2 border-t border-line/70 bg-foam/60 px-5 py-3 text-xs font-medium tracking-wide text-muted">
+            <CupGlyph className="size-4" />
+            {t("card.rule")}
+          </p>
+        )}
       </div>
 
       {complete && <Celebration />}
