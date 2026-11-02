@@ -7,6 +7,7 @@ import { getCard as getMockCard, getScenarioName } from "./mock-data";
 import { getUser } from "./auth";
 import { createAdminClient } from "./supabase/admin";
 import { createClient } from "./supabase/server";
+import { isGoogleWalletEnabled } from "./wallet/google/config";
 
 export type CardView =
   | { source: "mock"; card: Card; state: string }
@@ -50,7 +51,7 @@ const loadCard = cache(async (returnTo: string): Promise<Card> => {
 
   // Everything below is read as the customer, so RLS decides what they see.
   const [{ data: card, error: cardError }, { data: profile }, { data: coupons }] = await Promise.all([
-    supabase.from("cards").select("id, stamp_count, google_wallet_object_id").eq("cafe_id", cafe.id).eq("customer_id", user.id).single(),
+    supabase.from("cards").select("id, stamp_count").eq("cafe_id", cafe.id).eq("customer_id", user.id).single(),
     supabase.from("profiles").select("display_name").eq("id", user.id).single(),
     supabase
       .from("coupons")
@@ -69,9 +70,24 @@ const loadCard = cache(async (returnTo: string): Promise<Card> => {
     goal: cafe.stamps_required,
     justStamped: false,
     coupon: pickCoupon(coupons ?? []),
-    inGoogleWallet: card.google_wallet_object_id !== null,
+    inGoogleWallet: await inGoogleWallet(supabase, card.id),
   };
 });
+
+/**
+ * Whether the card has a Google Wallet pass, read only when Google Wallet is
+ * set up. Never breaks the card: the column comes from a wallet migration
+ * (20261102000100), and the card must show even before it has run.
+ */
+async function inGoogleWallet(supabase: Awaited<ReturnType<typeof createClient>>, cardId: string) {
+  if (!isGoogleWalletEnabled()) return false;
+  const { data, error } = await supabase.from("cards").select("google_wallet_object_id").eq("id", cardId).maybeSingle();
+  if (error) {
+    console.error("Could not read the card's Google Wallet pass", error);
+    return false;
+  }
+  return !!data?.google_wallet_object_id;
+}
 
 type CouponRow = { code: string; status: Coupon["status"]; issued_at: string; expires_at: string; redeemed_at: string | null };
 
