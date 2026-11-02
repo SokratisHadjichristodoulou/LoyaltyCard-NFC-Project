@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { couponOf, ensureCard, loadCafe, passData, themeFor, type PassRow, type WalletCafe } from "../data";
 import type { Theme } from "../themes";
 import { googleWallet, GoogleWalletError, signWithServiceAccount } from "./api";
-import { classIdFor, googleWalletConfig, objectIdFor, type GoogleWalletConfig } from "./config";
+import { classIdFor, googleWalletConfig, isGoogleWalletEnabled, objectIdFor, type GoogleWalletConfig } from "./config";
 import {
   buildLoyaltyClass,
   buildLoyaltyObject,
@@ -17,9 +17,7 @@ import {
 // Keeps Google Wallet in step with the database. Every function does nothing
 // (or says so) when Google Wallet isn't configured. See also ../updates.ts.
 
-export function isGoogleWalletEnabled() {
-  return googleWalletConfig() !== null;
-}
+export { isGoogleWalletEnabled };
 
 function requireConfig() {
   const config = googleWalletConfig();

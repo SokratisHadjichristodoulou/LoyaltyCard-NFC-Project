@@ -9,9 +9,9 @@ import { addTestStamp } from "@/app/actions/dev-stamp";
 import { isDevStampEnabled } from "@/lib/env";
 import { WalletButtons } from "@/components/wallet/WalletButtons";
 import { ThemeBanner } from "@/components/wallet/ThemeBanner";
-import { isAppleWalletEnabled } from "@/lib/wallet/apple/sync";
+import { isAppleWalletEnabled } from "@/lib/wallet/apple/config";
 import { currentTheme } from "@/lib/wallet/data";
-import { isGoogleWalletEnabled } from "@/lib/wallet/google/sync";
+import { isGoogleWalletEnabled } from "@/lib/wallet/google/config";
 import { presetAsTheme, themePresets } from "@/lib/wallet/presets";
 import { cyprusToday, DEFAULT_THEME, type Theme } from "@/lib/wallet/themes";
 

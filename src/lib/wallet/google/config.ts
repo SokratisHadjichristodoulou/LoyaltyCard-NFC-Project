@@ -31,6 +31,11 @@ export function googleWalletConfig() {
   return parseGoogleWalletConfig(process.env.GOOGLE_WALLET_ISSUER_ID, process.env.GOOGLE_WALLET_KEY);
 }
 
+/** Cheap to import (no API code): for pages deciding whether to show the button. */
+export function isGoogleWalletEnabled() {
+  return googleWalletConfig() !== null;
+}
+
 /** One loyalty class per cafe: "<issuer>.<cafe slug>". */
 export function classIdFor(issuerId: string, cafeSlug: string) {
   return `${issuerId}.${cafeSlug.replace(/[^A-Za-z0-9._-]/g, "-")}`;

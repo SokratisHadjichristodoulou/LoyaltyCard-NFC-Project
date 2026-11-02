@@ -1,19 +1,11 @@
 import "server-only";
 import QRCode from "qrcode";
+import { couponCheckUrlAt } from "./coupon-code";
 import { siteOrigin } from "./site";
 
-/**
- * What the coupon's QR code opens: the staff page with the code filled in.
- * The code itself is the secret (16 random characters); the staff page looks
- * it up and redeems it once, so a screenshot cannot be used twice.
- */
+/** What the coupon's QR code opens (see couponCheckUrlAt). */
 export async function couponCheckUrl(code: string) {
   return couponCheckUrlAt(await siteOrigin(), code);
-}
-
-/** The same, for a known site origin (e.g. the wallet pass's QR code). */
-export function couponCheckUrlAt(origin: string, code: string) {
-  return `${origin}/staff?code=${encodeURIComponent(code)}`;
 }
 
 /** The QR code as an SVG string, dark on white for reliable scanning. */

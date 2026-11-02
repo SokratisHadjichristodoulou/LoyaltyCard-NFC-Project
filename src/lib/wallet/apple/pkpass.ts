@@ -35,10 +35,6 @@ export async function packPass({ passJson, strings, images }: PassContent, signe
   ]);
 }
 
-export function base64Bytes(base64: string) {
-  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-}
-
 /** PNG files start with these 8 bytes (Apple Wallet only takes PNG). */
 export function isPng(data: Uint8Array) {
   const signature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];

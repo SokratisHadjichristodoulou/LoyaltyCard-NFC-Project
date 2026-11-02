@@ -52,3 +52,8 @@ export function parseAppleWalletConfig(env: Env): AppleWalletConfig | null {
 export function appleWalletConfig() {
   return parseAppleWalletConfig(process.env);
 }
+
+/** Cheap to import (no signing code): for pages deciding whether to show the button. */
+export function isAppleWalletEnabled() {
+  return appleWalletConfig() !== null;
+}

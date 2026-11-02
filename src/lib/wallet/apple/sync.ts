@@ -6,10 +6,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { couponOf, ensureCard, loadCafe, passData, themeFor, type WalletCafe } from "../data";
 import { isBuiltinHero, type Theme } from "../themes";
 import { pushPassUpdate } from "./apns";
-import { appleWalletConfig, type AppleWalletConfig } from "./config";
-import { PASS_IMAGES } from "./images.generated";
+import { appleWalletConfig, isAppleWalletEnabled, type AppleWalletConfig } from "./config";
 import { buildApplePass, type ApplePassCard } from "./pass";
-import { base64Bytes, isPng, packPass } from "./pkpass";
+import { isPng, packPass } from "./pkpass";
 import { nextUpdateTag } from "./service";
 import { importRsaSigningKey, type Signer } from "./pkcs7";
 
@@ -21,9 +20,7 @@ import { importRsaSigningKey, type Signer } from "./pkcs7";
 /** Where Apple's web service lives; Apple appends /v1/... */
 export const WEB_SERVICE_PATH = "/api/apple-wallet";
 
-export function isAppleWalletEnabled() {
-  return appleWalletConfig() !== null;
-}
+export { isAppleWalletEnabled };
 
 function requireConfig() {
   const config = appleWalletConfig();
@@ -60,9 +57,11 @@ async function publicFile(origin: string, path: string) {
   return new Uint8Array(await response.arrayBuffer());
 }
 
+const ICONS = ["icon.png", "icon@2x.png", "icon@3x.png", "logo.png", "logo@2x.png", "logo@3x.png"];
+
 async function passImages(origin: string, theme: Theme) {
   const images: Record<string, Uint8Array<ArrayBuffer>> = {};
-  for (const [name, base64] of Object.entries(PASS_IMAGES)) images[name] = base64Bytes(base64);
+  for (const name of ICONS) images[name] = await publicFile(origin, `/wallet/apple/${name}`);
 
   // The theme's own banner, if it is a PNG Apple can show (Apple Wallet takes PNG only).
   if (theme.heroImage.startsWith("https://")) {

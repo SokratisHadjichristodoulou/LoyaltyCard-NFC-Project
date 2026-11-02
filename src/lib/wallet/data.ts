@@ -1,5 +1,5 @@
 import "server-only";
-import { couponCheckUrlAt } from "@/lib/coupons";
+import { couponCheckUrlAt } from "@/lib/coupon-code";
 import { cafeSlug } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/types";

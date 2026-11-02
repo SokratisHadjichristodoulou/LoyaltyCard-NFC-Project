@@ -400,7 +400,7 @@ as you type.
 
 The built-in banners are `public/wallet/heroes/*.png` (Google, and the card
 page) and `public/wallet/apple/strip-*.png` (Apple, 375 × 123 at 1x/2x/3x);
-the Apple pass icon and logo are in `src/lib/wallet/apple/images.generated.ts`.
+the Apple pass icon and logo are `public/wallet/apple/icon*.png` and `logo*.png`.
 All are drawn by `scripts/wallet-heroes.mjs` (`node scripts/wallet-heroes.mjs`
 redraws them; needs Playwright). Preview them on the card with mock data:
 `MOCK_DATA=1 npm run dev`, then `/?theme=christmas` (or `easter`, `summer`,
