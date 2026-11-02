@@ -109,10 +109,47 @@ const designs = {
         <path d="M0 0 c-10 -14 -26 -14 -34 -4 c8 2 10 10 4 16 c12 2 24 -2 30 -12z" fill="#1f4d3a" />
         <circle cx="-5" cy="-4" r="6.5" fill="#b3261e" /><circle cx="6" cy="-7" r="6.5" fill="#c73a2f" /><circle cx="1" cy="5" r="6.5" fill="#b3261e" />
       </g>`;
+    // A small Santa in his sleigh, pulled by reindeer with Rudolph in front,
+    // flying in from the left under the garland. Drawn facing right.
+    const reindeer = (x, y, rudolph = false) => `
+      <g transform="translate(${x} ${y})">
+        <path d="M-9 4 l-7 3 M-7 5 l-5 7 M8 4 l8 3 M10 3 l6 7" stroke="#8a5a2b" stroke-width="2.4" stroke-linecap="round" />
+        <path d="M-14 -2 l-4 -3" stroke="#8a5a2b" stroke-width="2.4" stroke-linecap="round" />
+        <ellipse cx="0" cy="0" rx="14" ry="6.5" fill="#a0672e" />
+        <path d="M8 -3 L14 -14 L19 -12 L13 0 Z" fill="#a0672e" />
+        <ellipse cx="19" cy="-14" rx="5.5" ry="3.4" transform="rotate(-12 19 -14)" fill="#a0672e" />
+        <path d="M15 -16 l-3 -7 M15 -16 l2 -8 M12.5 -21 l-3 -1 M16.5 -21.5 l3 -2" stroke="#f3e6d0" stroke-width="1.6" stroke-linecap="round" fill="none" />
+        <circle cx="16.5" cy="-15" r="0.9" fill="#2c1209" />
+        ${rudolph ? `<circle cx="24.5" cy="-13" r="5" fill="#ff6b5b" opacity=".35" /><circle cx="24.5" cy="-13" r="2.4" fill="#ff3b2f" />` : `<circle cx="24.3" cy="-13" r="1.5" fill="#2c1209" />`}
+      </g>`;
+    const sleigh = `
+      <g>
+        <circle cx="-12" cy="-12" r="6" fill="#6e3b1f" />
+        <circle cx="-2" cy="-12" r="7.5" fill="#d8432f" />
+        <rect x="-9.5" y="-7" width="15" height="2.6" rx="1.3" fill="#f3e6d0" />
+        <circle cx="2" cy="-21" r="4.3" fill="#f1c9a5" />
+        <ellipse cx="3.5" cy="-18" rx="3.6" ry="3.2" fill="#ffffff" />
+        <path d="M-2.5 -23 L6.5 -23 L-5 -31 Z" fill="#d8432f" />
+        <rect x="-3" y="-24.5" width="10" height="2.4" rx="1.2" fill="#f3e6d0" />
+        <circle cx="-5" cy="-31" r="1.8" fill="#ffffff" />
+        <path d="M-20 -11 Q-22 4 -12 5 L16 5 Q22 5 24 -2 L11 -2 L7 -8 L-14 -8 Q-17 -14 -20 -11 Z" fill="#d6a24e" />
+        <path d="M-16 5 v5 M12 5 v5 M-22 10 L22 10 Q30 10 30 3" stroke="#efc874" stroke-width="2.2" stroke-linecap="round" fill="none" />
+      </g>`;
+    const team = [[50, -4], [98, -8], [146, -12, true]];
+    const sleighScene = `
+      <g transform="translate(70 138) rotate(-6) scale(1.05)">
+        ${[0, 1, 2, 3].map((i) => `<circle cx="${-34 - i * 12}" cy="${6 + i * 2}" r="${1.6 - i * 0.3}" fill="#efc874" opacity="${0.8 - i * 0.18}" />`).join("")}
+        <path d="M24 -1 L${team[team.length - 1][0] - 8} ${team[team.length - 1][1] - 2}" stroke="#efc874" stroke-width="1.2" opacity=".8" />
+        ${sleigh}
+        ${team.map(([x, y, r]) => reindeer(x, y, r)).join("")}
+      </g>`;
+    // Keep snowflakes off the sleigh, so the small figures read clearly.
+    const awayFromSleigh = (p) => !(p.x < 330 && p.y > 70 && p.y < 185);
     return svg(
       "#7d1d1d",
-      `${scatter(7, 30, { clear: 160 }).map((p) => at({ ...p, y: Math.max(p.y, 90) }, flake)).join("")}
+      `${scatter(7, 30, { clear: 160 }).map((p) => ({ ...p, y: Math.max(p.y, 90) })).filter(awayFromSleigh).map((p) => at(p, flake)).join("")}
       ${garland}${baubles}
+      ${sleighScene}
       <g transform="translate(${W / 2} 206)">${cup({ steam: "#f3e6d0", extra: holly })}</g>`,
     );
   },
