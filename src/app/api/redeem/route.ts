@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { areaRoles, getProfile } from "@/lib/auth";
 import { siteOrigin } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isGoogleWalletEnabled, refreshGooglePassLater } from "@/lib/wallet/google/sync";
+import { isAnyWalletEnabled, updateWalletPassesLater } from "@/lib/wallet/updates";
 
 /**
  * POST /api/redeem  { "code": "CP-XXXX-XXXX-XXXX-XXXX" }
@@ -29,10 +29,10 @@ export async function POST(request: NextRequest) {
     .single();
   if (error || !data) return NextResponse.json({ error: "server_error" }, { status: 500 });
 
-  // Take the used coupon's QR code off the customer's Google Wallet pass.
-  if ((data.result === "redeemed" || data.result === "expired") && data.code && isGoogleWalletEnabled()) {
+  // Take the used coupon's QR code off the customer's wallet passes.
+  if ((data.result === "redeemed" || data.result === "expired") && data.code && isAnyWalletEnabled()) {
     const { data: coupon } = await createAdminClient().from("coupons").select("customer_id").eq("code", data.code).maybeSingle();
-    if (coupon) await refreshGooglePassLater(coupon.customer_id);
+    if (coupon) await updateWalletPassesLater(coupon.customer_id);
   }
 
   return NextResponse.json({

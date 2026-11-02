@@ -5,8 +5,9 @@ A digital stamp card for Coffee Pause Cyprus.
 Customers get one stamp per coffee. The barista taps an NFC tag against the
 customer's phone, which opens this site and adds a stamp. At 10 stamps the
 customer receives a free-coffee coupon with a QR code that staff scan to check
-and redeem it. Customers can also keep the card in Google Wallet, where it
-updates by itself and changes look for the seasons (see Google Wallet).
+and redeem it. Customers can also keep the card in Google Wallet or Apple
+Wallet, where it updates by itself and changes look for the seasons (see
+Wallet passes).
 
 The site runs on a hidden subdomain of the cafe's domain and is not linked
 from the main website. Search engines are blocked by `public/robots.txt`, a
@@ -145,7 +146,8 @@ service role and signups can never grant `staff` or `admin`.
 | `cards`    | One per customer per cafe, with `stamp_count`                          |
 | `stamps`   | Audit log of every stamp given                                         |
 | `coupons`  | Free-coffee coupons: unguessable `code` (e.g. `CP-7K4Q-29XM-HD3P-WR8N`), `status`, expiry, who redeemed it |
-| `wallet_themes` | Seasonal looks for the Google Wallet pass: colour, banner, greeting, dates, `notify`. `cards.google_wallet_object_id` marks a card that has a pass |
+| `wallet_themes` | Seasonal looks for the wallet passes: colour, banner, greeting, dates, `notify`. `cards.google_wallet_object_id` marks a card that has a Google pass |
+| `apple_wallet_passes`, `apple_wallet_registrations` | Apple passes (serial number, the token phones send) and the phones holding them, with their push token and the version they were last pushed. Server only |
 
 Every table has a `cafe_id` (on `profiles` it is empty for customers), so more
 cafes can be added later without a redesign.
@@ -272,8 +274,8 @@ Use a higher counter for each test tap.
   up), and deactivate one that gets lost. The NFC step uses these tags.
 - **Settings**: stamps for a free coffee, how long coupons last, and the wait
   between stamps. Changes apply to the next stamps and new coupons.
-- **Wallet**: whether Google Wallet is on, how many cards are in it, and the
-  seasonal themes (see Google Wallet).
+- **Wallet**: whether Google Wallet and Apple Wallet are on, how many cards
+  are in each, and the seasonal themes (see Wallet passes).
 
 Reports come from database functions (`admin_stats`, `admin_customers`,
 `admin_activity`, `admin_stamp_log`) that return only the caller's own cafe
@@ -292,7 +294,10 @@ of the customer's data. `supabase/tests/migrations.test.sql` proves the
 migration record, including that a skipped migration is not recorded.
 `supabase/tests/wallet.test.sql` proves the Google Wallet parts: only the
 server writes themes and pass ids, the pass shows the right coupon, and
-expired coupons are cleared in batches. `supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
+expired coupons are cleared in batches. `supabase/tests/apple-wallet.test.sql`
+proves the Apple parts: registrations, which phones are owed a push (each
+change pushed once, in batches), and that a deleted account leaves an emptied
+pass. `supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
 same cafe, once only, never an expired coupon. `supabase/tests/admin.test.sql`
 proves the admin reports: right numbers for the admin's cafe, and nothing for
 staff, customers, signed-out visitors or admins of other cafes.
@@ -336,15 +341,17 @@ the errors.
 
 Both areas check the role again on the server.
 
-## Google Wallet
+## Wallet passes
 
-Customers on Android (and anyone with a Google account) can press **Add to
-Google Wallet** under their card. The pass then follows the card by itself:
+Under their card, customers get **Add to Apple Wallet** on iPhone and iPad,
+**Add to Google Wallet** on Android and other devices, and both on a Mac. Each
+wallet is optional: its button only shows once its settings are in place
+(Google Wallet and Apple Wallet below). The pass then follows the card by itself:
 
 | When                       | The pass                                                        |
 | -------------------------- | --------------------------------------------------------------- |
 | A stamp is added           | shows the new count, e.g. `7/10` (no notification)              |
-| The 10th stamp             | shows the coupon's QR code and its expiry, and the phone gets a "Your free coffee is ready ☕" notification |
+| The 10th stamp             | shows the coupon's QR code and its expiry, and the phone gets a notification ("Your free coffee is ready ☕" on Android, "Free coffee: Ready ☕" on iPhone) |
 | Staff redeem the coupon    | the QR code disappears                                          |
 | The coupon expires unused  | the QR code disappears (within a day, by the daily job)         |
 | A theme starts or changes  | every pass gets the new colour, banner and greeting at once      |
@@ -352,19 +359,22 @@ Google Wallet** under their card. The pass then follows the card by itself:
 
 The QR code on the pass is the same as on the coupon page, so staff scan it
 the same way. If a customer has two usable coupons, the pass shows the one
-that expires first. Pressing the button again is harmless (same pass).
+that expires first. Pressing a button again is harmless (same pass). Both
+passes are in Greek or English, following the phone's language.
 
-How it works: one Google Wallet *loyalty class* per cafe holds the look
-(logo, colour, banner, greeting), and one *loyalty object* per card holds the
-customer's stamps, name and coupon. The server updates the object after each
-stamp and redeem (`src/lib/stamping.ts`, `/api/redeem`), after the response
-is sent, so a slow Google never slows the tap, and a Google error never loses
-a stamp. Everything lives in `src/lib/wallet/`. The button is hidden on
-iPhone and iPad (Apple Wallet is a separate, later step).
+The updates happen after the response is sent (`src/lib/wallet/updates.ts`,
+called from `src/lib/stamping.ts` and `/api/redeem`), so a slow Google or
+Apple never slows the tap, and their errors never lose a stamp. Everything
+lives in `src/lib/wallet/`: `google/`, `apple/`, and the shared themes.
+
+Before Google's and Apple's reviews, replace the two buttons in
+`src/components/wallet/WalletButtons.tsx` with their official artwork
+("Add to Apple Wallet" and "Add to Google Wallet" badges, Greek and English),
+from Apple's Wallet identity guidelines and Google's Wallet brand guidelines.
 
 ### Themes
 
-**Admin → Wallet** shows how the cards look today and the list of themes. A
+Themes apply to both wallets. **Admin → Wallet** shows how the cards look today and the list of themes. A
 theme has a colour, a banner (one of the built-in ones or your own image), an
 optional greeting in Greek and English, and dates. Start from a preset
 (Christmas, Easter, Summer, Autumn) and adjust it; the preview shows the card
@@ -381,12 +391,18 @@ as you type.
 - Saving, switching off or deleting a theme updates the passes straight away.
   Themes start and end on their dates through the daily job; **Update all
   cards now** does it at once.
-- Your own banner: an `https` address of a 1032 × 336 PNG or JPG that stays
-  online (Google loads it from there).
+- Your own banner: an `https` address of a 1032 × 336 image that stays
+  online (Google loads it from there). Make it a PNG: Apple Wallet only takes
+  PNG, and shows the built-in banner instead of anything else.
+- Apple has no shared design like Google's: every iPhone gets its own new
+  pass. "Update all cards now" tells the first iPhones at once and the daily
+  job tells the rest.
 
-The built-in banners are `public/wallet/heroes/*.png`, drawn by
-`scripts/wallet-heroes.mjs` (`node scripts/wallet-heroes.mjs` redraws them;
-needs Playwright). Preview them on the card with mock data:
+The built-in banners are `public/wallet/heroes/*.png` (Google, and the card
+page) and `public/wallet/apple/strip-*.png` (Apple, 375 × 123 at 1x/2x/3x);
+the Apple pass icon and logo are in `src/lib/wallet/apple/images.generated.ts`.
+All are drawn by `scripts/wallet-heroes.mjs` (`node scripts/wallet-heroes.mjs`
+redraws them; needs Playwright). Preview them on the card with mock data:
 `MOCK_DATA=1 npm run dev`, then `/?theme=christmas` (or `easter`, `summer`,
 `autumn`).
 
@@ -394,14 +410,22 @@ needs Playwright). Preview them on the card with mock data:
 
 `.github/workflows/wallet-daily.yml` runs just after midnight in Cyprus. It
 calls `POST /api/wallet/daily` with `Authorization: Bearer
-<WALLET_CRON_SECRET>`, which switches the passes to the day's theme and takes
-expired coupons off them, 10 at a time (so one call stays within the Workers
-free plan's limit of 50 outgoing requests); the workflow calls again while
-the answer says `"more":true`. Run it by hand from **Actions → Wallet daily →
+<WALLET_CRON_SECRET>`, which switches the passes to the day's theme, takes
+expired coupons off them (4 per call) and sends the Apple pushes still owed
+(10 per call), so one call stays within the Workers free plan's limit of 50
+outgoing requests; the workflow calls again while the answer says
+`"more":true`. Run it by hand from **Actions → Wallet daily →
 Run workflow**. Without the `WALLET_CRON_SECRET` repository secret it does
 nothing.
 
-### Setting up Google Wallet
+### Google Wallet
+
+One Google Wallet *loyalty class* per cafe holds the look (logo, colour,
+banner, greeting), and one *loyalty object* per card holds the customer's
+stamps, name and coupon. A theme changes the class once, and every card
+follows.
+
+#### Setting up Google Wallet
 
 1. **Issuer account**: in the [Google Pay & Wallet Console](https://pay.google.com/business/console),
    open **Google Wallet API** and create the issuer account. Note the
@@ -433,13 +457,86 @@ code disappears.
 
 **Going live.** In the Wallet console, request **publishing access**. Google
 reviews the pass and the site. Their brand rules ask for the official "Add to
-Google Wallet" button, so before the review replace the button in
-`src/components/wallet/GoogleWalletButton.tsx` with Google's button artwork
-(Greek and English) from the Google Wallet brand guidelines.
+Google Wallet" button: replace the buttons first (see above).
 
 **If the logo or banner doesn't show** on the pass: Google downloads them
 from `https://card.…/wallet/…`. These must be public (they are; `robots.txt`
 allows `/wallet/`), and your own banner addresses must work without signing in.
+
+### Apple Wallet
+
+**Add to Apple Wallet** downloads `/wallet/apple`: a signed `.pkpass`
+(`pass.json`, Greek and English strings, icon, logo and banner, a manifest
+and its PKCS #7 signature, zipped; made in `src/lib/wallet/apple/`). The pass
+names the site's update web service, which iPhones call
+(`src/app/api/apple-wallet/v1/…`, Apple's PassKit web service): to register
+for updates, to ask which passes changed, and to download the new pass. After
+a change the server marks the pass changed and sends each phone holding it an
+empty push through APNs; the phone then downloads the new pass.
+
+- Each phone is owed a push while the version it was last pushed is lower
+  than the pass's; pushes are claimed in the database, so no change is lost
+  or sent twice. Phones that removed the pass are forgotten when APNs says so.
+- A deleted account leaves the pass on the phone, emptied and marked void.
+- Apple only delivers these update pushes from its production service, to a
+  deployed site: they can't be tried from `npm run dev`.
+
+#### Setting up Apple Wallet
+
+You need an Apple Developer Program membership (99 USD a year).
+
+1. **Pass Type ID**: [developer.apple.com](https://developer.apple.com/account/resources/identifiers/list/passTypeId)
+   → Identifiers → **+** → Pass Type IDs, e.g. `pass.com.coffeepause.card`.
+2. **Its certificate**: open the Pass Type ID → **Create Certificate**, upload
+   a certificate signing request (Keychain Access → Certificate Assistant →
+   Request a Certificate From a Certificate Authority, saved to disk), download
+   the `.cer`, double-click it, then in Keychain Access export the certificate
+   with its key as `pass.p12`. Turn it into the two PEM files the site needs:
+   ```bash
+   openssl pkcs12 -in pass.p12 -clcerts -nokeys -out pass-cert.pem -legacy
+   ```
+   ```bash
+   openssl pkcs12 -in pass.p12 -nocerts -nodes -out pass-key.pem -legacy
+   ```
+   (Drop `-legacy` if your OpenSSL says it doesn't know it.) The key must be
+   unencrypted, hence `-nodes`; keep it private.
+3. **Apple's intermediate certificate**: download "Worldwide Developer
+   Relations - G4" from [Apple PKI](https://www.apple.com/certificateauthority/)
+   and convert it:
+   ```bash
+   openssl x509 -inform der -in AppleWWDRCAG4.cer -out wwdr.pem
+   ```
+4. **APNs key** (for the update pushes): Keys → **+**, tick **Apple Push
+   Notifications service (APNs)**, download the `.p8` file (only once) and
+   note its **Key ID**. Your **Team ID** is at the top right of the developer
+   account (10 characters).
+5. **Settings**, locally in `.env.local` and on the Worker as **Secrets**
+   (paste the PEM files whole, line breaks included):
+   - `APPLE_WALLET_PASS_TYPE_ID`: e.g. `pass.com.coffeepause.card`
+   - `APPLE_WALLET_TEAM_ID`: the Team ID
+   - `APPLE_WALLET_CERT`: `pass-cert.pem`
+   - `APPLE_WALLET_KEY`: `pass-key.pem`
+   - `APPLE_WALLET_WWDR`: `wwdr.pem`
+   - `APPLE_APNS_KEY_ID`: the key's ID
+   - `APPLE_APNS_KEY`: the `.p8` file
+   - `WALLET_CRON_SECRET` too, if not already set for Google (daily job).
+6. Redeploy, then open **Admin → Wallet**: it should say Apple Wallet is on.
+
+**Testing.** On an iPhone, open the live site, sign in, press **Add to Apple
+Wallet**, then **Add**. Get a stamp: within seconds the pass shows it (in
+Wallet, the pass's back → the "…" menu → **Automatic Updates** must be on,
+which is the default). Collect 10: the lock screen says "Free coffee: Ready ☕"
+and the pass shows the QR code. Redeem it: the QR code disappears.
+
+If the pass doesn't update: check the Worker logs for "Apple Wallet" lines.
+Phones also report problems to `/api/apple-wallet/v1/log`, which logs them as
+"Apple Wallet (from a phone)". A pass that can't be added at all usually
+means a wrong certificate, key or intermediate (the three must belong
+together), or a Pass Type ID that doesn't match the certificate.
+
+The Pass Type ID certificate expires after a year: renew it before then and
+replace `APPLE_WALLET_CERT` and `APPLE_WALLET_KEY` (passes already on phones
+keep working).
 
 ## Privacy and accounts
 
@@ -498,13 +595,12 @@ missing from `en.json` fails the typecheck.
 | ------------------------------------------------- | ------------------------- |
 | Programming and testing real NTAG 424 tags on iPhone and Android | when the tags arrive |
 | Mock data and preview bar (dev only, `MOCK_DATA=1`) | removed in a later step |
-| Apple Wallet pass (Google Wallet is done)         | a later step              |
 
 ## Project structure
 
 ```
 public/                 logo.png, robots.txt (disallow all but /wallet/)
-public/wallet/          logo and seasonal banners loaded by Google Wallet
+public/wallet/          logo and seasonal banners for the wallet passes (Google, Apple)
 references/             design screenshots (not deployed)
 wrangler.jsonc          Cloudflare Workers config
 open-next.config.ts     Cloudflare adapter config
@@ -512,7 +608,7 @@ scripts/test-db.sh      migrations + database tests on a throwaway Postgres
 scripts/nfc-keys.ts     prints one tag's keys and SDM settings (npm run nfc:keys)
 scripts/nfc-tap-url.ts  makes a test tap URL (npm run nfc:url)
 scripts/db-check.ts     checks the database has every migration (npm run db:check)
-scripts/wallet-heroes.mjs draws the built-in Google Wallet banners
+scripts/wallet-heroes.mjs draws the built-in wallet banners and the Apple pass icon and logo
 src/
   proxy.ts              session refresh, /staff and /admin protection
   app/
@@ -529,7 +625,9 @@ src/
     not-allowed/        shown for the wrong role
     tap/                opened by the NFC tag: verifies and stamps; complete/ after sign-in; problem/
     wallet/google/      "Add to Google Wallet": creates the pass, sends the customer to Google
-    api/wallet/daily/   daily job: today's theme, expired coupons off the passes
+    wallet/apple/       "Add to Apple Wallet": the signed .pkpass
+    api/apple-wallet/   Apple's PassKit web service (iPhones register and fetch updates)
+    api/wallet/daily/   daily job: today's theme, expired coupons off the passes, Apple pushes
     staff/              coupon scanner and redeem (protected)
     admin/              dashboard: overview, customers, tags, settings, wallet themes (protected)
     api/redeem/         redeem a coupon (staff only)
@@ -545,7 +643,7 @@ src/
     coupons.ts          coupon QR code
     coupon-code.ts      reading a code from a scan or typed input
     stamping.ts         adds a stamp through record_stamp
-    wallet/             Google Wallet: themes, presets, pass design, API client, sync
+    wallet/             themes and presets; google/ and apple/ (pass design, signing, API, sync); updates.ts
     mock-data.ts        dev-only preview states
   i18n/                 el.json, en.json
   styles/               global styles
@@ -580,7 +678,8 @@ live site too.
    `NEXT_PUBLIC_SITE_URL` (`https://card.coffeepause.com.cy`), `NFC_TAG_SECRET`,
    and `CAFE_SLUG` if not the default. For Google Wallet (optional, can come
    later): `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_KEY` and
-   `WALLET_CRON_SECRET` (see Google Wallet). Don't set `MOCK_DATA` or `DEV_STAMPS`.
+   `WALLET_CRON_SECRET`; for Apple Wallet the `APPLE_WALLET_*` and
+   `APPLE_APNS_*` settings (see Wallet passes). Don't set `MOCK_DATA` or `DEV_STAMPS`.
 
 ### Automatic deploys (GitHub Actions)
 
@@ -596,15 +695,15 @@ secret**, add:
 - `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the "Edit Cloudflare
   Workers" template, limited to this account and the `coffeepause.app` zone
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: the Supabase `anon` key
-- `WALLET_CRON_SECRET` (with Google Wallet): the same value as on the Worker,
+- `WALLET_CRON_SECRET` (with a wallet): the same value as on the Worker,
   for the daily wallet job
 
 On the Worker in Cloudflare (set once, kept by every deploy):
 
 - **Settings → Variables and Secrets**: `SUPABASE_SERVICE_ROLE_KEY`,
-  `NFC_TAG_SECRET` (and `CAFE_SLUG`, if used; with Google Wallet also
-  `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_KEY`, `WALLET_CRON_SECRET`), each
-  as type **Secret**.
+  `NFC_TAG_SECRET` (and `CAFE_SLUG`, if used; with the wallets also
+  `GOOGLE_WALLET_*`, `APPLE_WALLET_*`, `APPLE_APNS_*`, `WALLET_CRON_SECRET`),
+  each as type **Secret**.
   Plain-text variables set here would be replaced by `wrangler.jsonc` on the
   next deploy.
 - **Settings → Domains & Routes**: the custom domain
@@ -631,7 +730,7 @@ only.
 2. Open `https://card.…/api/health`: it must say `{"status":"ok"}`. Point an
    uptime monitor at it.
 3. Check `https://card.…/robots.txt` says `Disallow: /` (with `Allow: /wallet/`
-   for the Google Wallet images only).
+   for the wallet pass images only).
 4. Sign in with your own email, make yourself admin, open `/admin`.
 5. When the NFC tags arrive, program one and tap it with an iPhone and an
    Android phone.

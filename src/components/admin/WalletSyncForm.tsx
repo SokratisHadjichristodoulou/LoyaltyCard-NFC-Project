@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { syncWalletNow, type FormState } from "@/app/admin/actions";
 
-type Labels = { syncNow: string; synced: string; syncedNotified: string; errors: Record<string, string> };
+type Labels = { syncNow: string; synced: string; syncedNotified: string; syncedAppleMore: string; errors: Record<string, string> };
 
 /** "Update all cards now": switches every pass to the current theme straight away. */
 export function WalletSyncForm({ labels, disabled }: { labels: Labels; disabled: boolean }) {
@@ -19,7 +19,9 @@ export function WalletSyncForm({ labels, disabled }: { labels: Labels; disabled:
       </button>
       {(state.error || state.ok) && (
         <p role={state.error ? "alert" : "status"} className={`rounded-xl px-4 py-3 text-sm ${state.error ? "bg-berry-soft text-berry" : "bg-olive-soft text-olive"}`}>
-          {state.error ? labels.errors[state.error] : state.values?.notified ? labels.syncedNotified : labels.synced}
+          {state.error
+            ? labels.errors[state.error]
+            : [state.values?.notified ? labels.syncedNotified : labels.synced, state.values?.appleMore ? labels.syncedAppleMore : ""].join(" ")}
         </p>
       )}
     </form>

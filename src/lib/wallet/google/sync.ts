@@ -1,12 +1,8 @@
 import "server-only";
-import { after } from "next/server";
 import { cardNumberFor } from "@/lib/card";
-import { couponCheckUrlAt } from "@/lib/coupons";
-import { cafeSlug } from "@/lib/env";
-import { siteOrigin } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Database } from "@/lib/supabase/types";
-import { activeTheme, cyprusToday, type Theme } from "../themes";
+import { couponOf, ensureCard, loadCafe, passData, themeFor, type PassRow, type WalletCafe } from "../data";
+import type { Theme } from "../themes";
 import { googleWallet, GoogleWalletError, signWithServiceAccount } from "./api";
 import { classIdFor, googleWalletConfig, objectIdFor, type GoogleWalletConfig } from "./config";
 import {
@@ -18,11 +14,8 @@ import {
   themeMessage,
 } from "./pass";
 
-// Keeps Google Wallet in step with the database. Every function is a no-op
-// (or says so) when Google Wallet isn't configured, and the ones called after
-// a stamp or redeem never throw: the stamp counts even if Google is down.
-
-type PassRow = Database["public"]["Functions"]["wallet_pass_data"]["Returns"][number];
+// Keeps Google Wallet in step with the database. Every function does nothing
+// (or says so) when Google Wallet isn't configured. See also ../updates.ts.
 
 export function isGoogleWalletEnabled() {
   return googleWalletConfig() !== null;
@@ -34,53 +27,16 @@ function requireConfig() {
   return config;
 }
 
-async function loadCafe() {
-  const { data, error } = await createAdminClient()
-    .from("cafes")
-    .select("id, name, slug, stamps_required, wallet_theme_key")
-    .eq("slug", cafeSlug())
-    .single();
-  if (error || !data) throw error ?? new Error(`Cafe "${cafeSlug()}" not found`);
-  return data;
-}
-
-export async function loadThemes(cafeId: string) {
-  const { data, error } = await createAdminClient()
-    .from("wallet_themes")
-    .select("*")
-    .eq("cafe_id", cafeId)
-    .order("starts_on", { ascending: true });
-  if (error) throw error;
-  return data ?? [];
-}
-
-/** The theme that is on today at this site's cafe. */
-export async function currentTheme(): Promise<Theme> {
-  const cafe = await loadCafe();
-  return activeTheme(await loadThemes(cafe.id), cyprusToday());
-}
-
-async function passData(cafeId: string, customerId: string): Promise<PassRow | null> {
-  const { data, error } = await createAdminClient()
-    .rpc("wallet_pass_data", { p_cafe_id: cafeId, p_customer_id: customerId })
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-function objectFor(config: GoogleWalletConfig, origin: string, row: PassRow, objectId: string, couponIssued = false) {
+function objectFor(config: GoogleWalletConfig, cafe: WalletCafe, origin: string, row: PassRow, objectId: string, couponIssued = false) {
   return buildLoyaltyObject(
     {
       objectId,
-      classId: classIdFor(config.issuerId, cafeSlug()),
+      classId: classIdFor(config.issuerId, cafe.slug),
       cardNumber: cardNumberFor(row.card_id),
       customerName: row.display_name,
       stamps: row.stamp_count,
       goal: row.stamps_required,
-      coupon:
-        row.coupon_code && row.coupon_expires_at
-          ? { code: row.coupon_code, checkUrl: couponCheckUrlAt(origin, row.coupon_code), expiresAt: row.coupon_expires_at }
-          : null,
+      coupon: couponOf(row, origin),
       origin,
     },
     // A new coupon's message is added separately, with a notification.
@@ -93,10 +49,13 @@ function objectFor(config: GoogleWalletConfig, origin: string, row: PassRow, obj
  * theme. When a different theme has started since the last update and it
  * has "notify" on, every customer with the card gets a notification, once.
  */
-export async function syncGoogleTheme(origin: string): Promise<{ theme: Theme; notified: boolean }> {
+export async function syncGoogleTheme(
+  origin: string,
+  context?: { cafe: WalletCafe; theme: Theme },
+): Promise<{ theme: Theme; notified: boolean }> {
   const config = requireConfig();
-  const cafe = await loadCafe();
-  const theme = activeTheme(await loadThemes(cafe.id), cyprusToday());
+  const cafe = context?.cafe ?? (await loadCafe());
+  const theme = context?.theme ?? (await themeFor(cafe));
   const classId = classIdFor(config.issuerId, cafe.slug);
 
   await googleWallet.upsertClass(
@@ -128,19 +87,14 @@ export async function syncGoogleTheme(origin: string): Promise<{ theme: Theme; n
 export async function saveToGoogleWalletUrl(origin: string, customerId: string) {
   const config = requireConfig();
   const cafe = await loadCafe();
-  const admin = createAdminClient();
-
-  const { error: cardError } = await admin
-    .from("cards")
-    .upsert({ cafe_id: cafe.id, customer_id: customerId }, { onConflict: "cafe_id,customer_id", ignoreDuplicates: true });
-  if (cardError) throw cardError;
+  await ensureCard(cafe.id, customerId);
   const row = await passData(cafe.id, customerId);
   if (!row) throw new Error("Card not found after creating it");
 
   const objectId = row.object_id ?? objectIdFor(config.issuerId, row.card_id);
   // The class must exist before the first pass: set it up on first use.
-  if (cafe.wallet_theme_key === null) await syncGoogleTheme(origin);
-  const object = objectFor(config, origin, row, objectId);
+  if (cafe.wallet_theme_key === null) await syncGoogleTheme(origin, { cafe, theme: await themeFor(cafe) });
+  const object = objectFor(config, cafe, origin, row, objectId);
   try {
     await googleWallet.upsertObject(config, object);
   } catch (error) {
@@ -151,7 +105,7 @@ export async function saveToGoogleWalletUrl(origin: string, customerId: string) 
   }
 
   if (!row.object_id) {
-    const { error } = await admin.from("cards").update({ google_wallet_object_id: objectId }).eq("id", row.card_id);
+    const { error } = await createAdminClient().from("cards").update({ google_wallet_object_id: objectId }).eq("id", row.card_id);
     if (error) throw error;
   }
 
@@ -167,14 +121,13 @@ export async function saveToGoogleWalletUrl(origin: string, customerId: string) 
  * nothing if they haven't added it. With couponIssued, also sends the
  * "free coffee ready" notification.
  */
-export async function refreshGooglePass(origin: string, customerId: string, { couponIssued = false } = {}) {
+export async function refreshGooglePass(origin: string, cafe: WalletCafe, customerId: string, { couponIssued = false } = {}) {
   const config = googleWalletConfig();
   if (!config) return;
-  const cafe = await loadCafe();
   const row = await passData(cafe.id, customerId);
   if (!row?.object_id) return;
 
-  await googleWallet.upsertObject(config, objectFor(config, origin, row, row.object_id, couponIssued));
+  await googleWallet.upsertObject(config, objectFor(config, cafe, origin, row, row.object_id, couponIssued));
   if (couponIssued && row.coupon_code) {
     try {
       await googleWallet.addObjectMessage(config, row.object_id, couponMessage(row.coupon_code, "TEXT_AND_NOTIFY"));
@@ -185,26 +138,11 @@ export async function refreshGooglePass(origin: string, customerId: string, { co
   }
 }
 
-/**
- * Schedules refreshGooglePass to run after the response is sent, so the
- * customer isn't kept waiting for Google. Errors are logged, never thrown.
- */
-export async function refreshGooglePassLater(customerId: string, options: { couponIssued?: boolean } = {}) {
-  if (!isGoogleWalletEnabled()) return;
-  const origin = await siteOrigin();
-  after(async () => {
-    try {
-      await refreshGooglePass(origin, customerId, options);
-    } catch (error) {
-      console.error("Google Wallet: pass update failed", error);
-    }
-  });
-}
-
 /** Empties the customer's pass (no name, stamps or coupon) when they delete their account. */
 export async function retireGooglePass(customerId: string) {
   const config = googleWalletConfig();
   if (!config) return;
+  const cafe = await loadCafe();
   const { data } = await createAdminClient()
     .from("cards")
     .select("google_wallet_object_id")
@@ -212,49 +150,20 @@ export async function retireGooglePass(customerId: string) {
     .not("google_wallet_object_id", "is", null);
   for (const card of data ?? []) {
     try {
-      await googleWallet.updateObject(config, buildRetiredObject(card.google_wallet_object_id!, classIdFor(config.issuerId, cafeSlug())));
+      await googleWallet.updateObject(config, buildRetiredObject(card.google_wallet_object_id!, classIdFor(config.issuerId, cafe.slug)));
     } catch (error) {
       console.error("Google Wallet: could not empty the pass of a deleted account", error);
     }
   }
 }
 
-/**
- * The daily job (POST /api/wallet/daily): switches the passes to today's
- * theme and takes expired coupons off them. Handles at most `limit` coupons
- * per call, so one call stays within the host's limits; `more` says to call
- * again.
- */
-export async function runDailyWalletJob(origin: string, limit = 10) {
-  const { theme, notified } = await syncGoogleTheme(origin);
-  const cafe = await loadCafe();
-
-  const { data, error } = await createAdminClient().rpc("wallet_expire_coupons", { p_cafe_id: cafe.id, p_limit: limit });
-  if (error) throw error;
-  const rows = data ?? [];
-  const customers = [...new Set(rows.filter((r) => r.has_pass).map((r) => r.customer_id))];
-
-  let refreshed = 0;
-  let failed = 0;
-  for (const customerId of customers) {
-    try {
-      await refreshGooglePass(origin, customerId);
-      refreshed++;
-    } catch (error) {
-      failed++;
-      console.error("Google Wallet: pass update failed", error);
-    }
-  }
-  return { theme: theme.key, notified, expired: rows.length, refreshed, failed, more: rows.length >= limit };
-}
-
-/** For the admin page: is Google Wallet on, and how many cards have a pass. */
-export async function googleWalletStatus(cafeId: string) {
+/** How many of the cafe's cards have a Google Wallet pass. */
+export async function googlePassCount(cafeId: string) {
   const { count, error } = await createAdminClient()
     .from("cards")
     .select("id", { count: "exact", head: true })
     .eq("cafe_id", cafeId)
     .not("google_wallet_object_id", "is", null);
   if (error) throw error;
-  return { enabled: isGoogleWalletEnabled(), passes: count ?? 0 };
+  return count ?? 0;
 }

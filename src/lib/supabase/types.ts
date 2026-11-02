@@ -52,6 +52,7 @@ export type Database = {
         coupon_valid_days: number;
         stamp_cooldown_seconds: number;
         wallet_theme_key: string | null;
+        apple_wallet_theme_key: string | null;
         created_at: string;
       }, "name" | "slug">;
       profiles: Table<{
@@ -101,6 +102,23 @@ export type Database = {
         redeemed_at: string | null;
         redeemed_by: string | null;
       }, "cafe_id" | "customer_id" | "expires_at">;
+      apple_wallet_passes: Table<{
+        serial_number: string;
+        cafe_id: string;
+        card_id: string | null;
+        auth_token: string;
+        updated_at: string;
+        version: number;
+        created_at: string;
+      }, "serial_number" | "cafe_id" | "auth_token">;
+      apple_wallet_registrations: Table<{
+        device_library_id: string;
+        serial_number: string;
+        push_token: string;
+        pushed_version: number;
+        pushed_at: string | null;
+        created_at: string;
+      }, "device_library_id" | "serial_number" | "push_token">;
       wallet_themes: Table<WalletThemeRow, "cafe_id" | "name" | "background_color" | "hero_image" | "starts_on" | "ends_on">;
     };
     Views: Record<string, never>;
@@ -180,6 +198,30 @@ export type Database = {
           coupon_code: string | null;
           coupon_expires_at: string | null;
         }[];
+      };
+      apple_wallet_register: {
+        Args: { p_device: string; p_serial: string; p_push_token: string };
+        Returns: "created" | "updated";
+      };
+      apple_wallet_updated_serials: {
+        Args: { p_device: string; p_since: string | null };
+        Returns: { serial_number: string; updated_at: string }[];
+      };
+      apple_wallet_touch: {
+        Args: { p_cafe_id: string; p_customer_id: string };
+        Returns: string | null;
+      };
+      apple_wallet_touch_all: {
+        Args: { p_cafe_id: string };
+        Returns: number;
+      };
+      apple_wallet_claim_pushes: {
+        Args: { p_cafe_id: string; p_serial: string | null; p_limit: number };
+        Returns: { device_library_id: string; serial_number: string; push_token: string }[];
+      };
+      apple_wallet_pass_count: {
+        Args: { p_cafe_id: string };
+        Returns: number;
       };
       wallet_expire_coupons: {
         Args: { p_cafe_id: string; p_limit: number };

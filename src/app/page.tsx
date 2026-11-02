@@ -7,9 +7,11 @@ import { StampCard } from "@/components/StampCard";
 import { withState } from "@/components/href";
 import { addTestStamp } from "@/app/actions/dev-stamp";
 import { isDevStampEnabled } from "@/lib/env";
-import { GoogleWalletButton } from "@/components/wallet/GoogleWalletButton";
+import { WalletButtons } from "@/components/wallet/WalletButtons";
 import { ThemeBanner } from "@/components/wallet/ThemeBanner";
-import { currentTheme, isGoogleWalletEnabled } from "@/lib/wallet/google/sync";
+import { isAppleWalletEnabled } from "@/lib/wallet/apple/sync";
+import { currentTheme } from "@/lib/wallet/data";
+import { isGoogleWalletEnabled } from "@/lib/wallet/google/sync";
 import { presetAsTheme, themePresets } from "@/lib/wallet/presets";
 import { cyprusToday, DEFAULT_THEME, type Theme } from "@/lib/wallet/themes";
 
@@ -17,9 +19,11 @@ type Props = {
   searchParams: Promise<{ state?: string; stamped?: string; cooldown?: string; daily?: string; wallet?: string; theme?: string }>;
 };
 
-/** Google Wallet isn't on iPhone or iPad (they get Apple Wallet later). */
-function isAppleMobile(userAgent: string | null) {
-  return /iPhone|iPad|iPod/i.test(userAgent ?? "");
+/** Which wallet buttons suit the device: Apple on iPhone/iPad, Google elsewhere, both on a Mac. */
+function walletsFor(userAgent: string | null) {
+  const ua = userAgent ?? "";
+  const appleMobile = /iPhone|iPad|iPod/i.test(ua);
+  return { apple: appleMobile || /Macintosh/i.test(ua), google: !appleMobile };
 }
 
 /** The seasonal theme on today; in the mock preview, `?theme=christmas` etc. */
@@ -28,7 +32,7 @@ async function themeFor(source: "db" | "mock", preview: string | undefined): Pro
     const preset = themePresets(cyprusToday()).find((p) => p.id === preview && p.id !== "blank");
     return preset ? presetAsTheme(preset) : DEFAULT_THEME;
   }
-  return currentTheme().catch((error) => {
+  return currentTheme().catch((error: unknown) => {
     console.error("Could not load the wallet theme", error);
     return DEFAULT_THEME;
   });
@@ -52,7 +56,11 @@ export default async function HomePage({ searchParams }: Props) {
   const cooldownSeconds = Number(params.cooldown);
   const cooldownMinutes = Number.isFinite(cooldownSeconds) && cooldownSeconds > 0 ? Math.ceil(cooldownSeconds / 60) : 0;
   const theme = await themeFor(source, params.theme);
-  const showWallet = (source === "mock" || isGoogleWalletEnabled()) && !isAppleMobile((await headers()).get("user-agent"));
+  const device = walletsFor((await headers()).get("user-agent"));
+  const wallets = {
+    apple: device.apple && (source === "mock" || isAppleWalletEnabled()),
+    google: device.google && (source === "mock" || isGoogleWalletEnabled()),
+  };
 
   return (
     <Shell t={t} active="card" state={state}>
@@ -112,7 +120,12 @@ export default async function HomePage({ searchParams }: Props) {
           </Link>
         </div>
       )}
-      {showWallet && <GoogleWalletButton t={t} added={!!card.inGoogleWallet} failed={params.wallet === "error"} />}
+      <WalletButtons
+        t={t}
+        {...wallets}
+        inGoogleWallet={!!card.inGoogleWallet}
+        failed={params.wallet === "error" ? "google" : params.wallet === "apple-error" ? "apple" : null}
+      />
 
       {source === "db" && isDevStampEnabled() && (
         <form action={addTestStamp} className="mt-8 rounded-2xl border border-dashed border-line px-4 py-3">

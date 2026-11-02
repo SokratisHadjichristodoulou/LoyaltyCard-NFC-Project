@@ -262,16 +262,21 @@
     },
     "wallet": {
       "title": "Wallet & themes",
-      "intro": "How every card saved in Google Wallet looks. A theme changes the colour and banner of all cards at once, on the days you choose.",
+      "intro": "How every card saved in Google Wallet and Apple Wallet looks. A theme changes the colour and banner of all cards at once, on the days you choose.",
       "statusOn": "Google Wallet is on.",
       "statusOff": "Google Wallet isn't set up yet (GOOGLE_WALLET_ISSUER_ID and GOOGLE_WALLET_KEY, see the README). You can already add themes.",
       "passes_one": "{count} card in Google Wallet",
       "passes_other": "{count} cards in Google Wallet",
+      "appleOn": "Apple Wallet is on.",
+      "appleOff": "Apple Wallet isn't set up yet (the APPLE_… settings, see the README).",
+      "applePasses_one": "{count} card in Apple Wallet",
+      "applePasses_other": "{count} cards in Apple Wallet",
       "now": "On the cards now",
       "everyday": "The everyday look",
       "syncNow": "Update all cards now",
       "synced": "All cards updated.",
       "syncedNotified": "All cards updated, and customers were notified.",
+      "syncedAppleMore": "Some iPhones will get the new look with tonight's daily update.",
       "syncFailed": "Google Wallet didn't accept the update. Try again, or check the settings.",
       "syncOff": "Set up Google Wallet first.",
       "themes": "Themes",
@@ -347,9 +352,11 @@
   },
   "wallet": {
     "add": "Add to Google Wallet",
+    "addApple": "Add to Apple Wallet",
     "addHelp": "Your stamps and coupon on your phone, always up to date.",
     "added": "Your card is in Google Wallet and updates by itself.",
     "error": "We couldn't add your card to Google Wallet. Try again in a moment.",
+    "errorApple": "We couldn't make your card for Apple Wallet. Try again in a moment.",
     "pass": {
       "programName": "Stamp card",
       "stamps": "Stamps",
@@ -362,7 +369,17 @@
       "couponNotify": "Show your card's QR code at the counter.",
       "openCard": "My card",
       "themeHeader": "From {cafe}",
-      "themeNotify": "Your card has a new look."
+      "themeNotify": "Your card has a new look.",
+      "reward": "Free coffee",
+      "rewardReady": "Ready ☕",
+      "rewardAt": "At {goal} stamps",
+      "rewardChange": "Free coffee: %@",
+      "validUntil": "Coupon valid until",
+      "couponCode": "Coupon code",
+      "website": "Your card online",
+      "description": "{cafe} stamp card",
+      "deletedLabel": "Card",
+      "deleted": "This card was deleted along with its account."
     }
   },
   "dev": {
@@ -418,7 +435,7 @@
     },
     "who_sees": {
       "title": "Who sees your data",
-      "body": "The cafe owner sees your email, stamps and coupons. Staff only see the coupon they scan. The data is stored for us by Supabase (database and sign-in), the service that sends sign-in emails, and the company that hosts the site. We don't sell your data or give it to anyone else. If you add your card to Google Wallet, Google also keeps your card number, your name (if you added one), your stamps and your coupon code, under Google's own privacy policy. If you delete your account, we also remove them from the card in Google Wallet."
+      "body": "The cafe owner sees your email, stamps and coupons. Staff only see the coupon they scan. The data is stored for us by Supabase (database and sign-in), the service that sends sign-in emails, and the company that hosts the site. We don't sell your data or give it to anyone else. If you add your card to Google Wallet, Google also keeps your card number, your name (if you added one), your stamps and your coupon code, under Google's own privacy policy. If you add it to Apple Wallet, the same details stay on your iPhone, and Apple only delivers the notices that the card has changed. If you delete your account, we also remove them from the card in your wallet."
     },
     "how_long": {
       "title": "How long",

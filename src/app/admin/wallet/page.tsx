@@ -55,19 +55,26 @@ export default async function AdminWalletPage() {
           <p className="font-semibold">{current.id ? current.name : t("admin.wallet.everyday")}</p>
         </div>
         <div className="grid content-start gap-4">
-          <p
-            role="status"
-            className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${status.enabled ? "bg-olive-soft text-olive" : "bg-line/40 text-roast"}`}
-          >
-            {status.enabled ? t("admin.wallet.statusOn") : t("admin.wallet.statusOff")}
-            {status.enabled && <> {t.plural("admin.wallet.passes", { count: status.passes })}.</>}
-          </p>
+          {([
+            ["google", status.google, t("admin.wallet.statusOn"), t("admin.wallet.statusOff"), "admin.wallet.passes"],
+            ["apple", status.apple, t("admin.wallet.appleOn"), t("admin.wallet.appleOff"), "admin.wallet.applePasses"],
+          ] as const).map(([id, wallet, on, off, count]) => (
+            <p
+              key={id}
+              role="status"
+              className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${wallet.enabled ? "bg-olive-soft text-olive" : "bg-line/40 text-roast"}`}
+            >
+              {wallet.enabled ? on : off}
+              {wallet.enabled && <> {t.plural(count, { count: wallet.passes })}.</>}
+            </p>
+          ))}
           <WalletSyncForm
-            disabled={!status.enabled}
+            disabled={!status.google.enabled && !status.apple.enabled}
             labels={{
               syncNow: m.syncNow,
               synced: m.synced,
               syncedNotified: m.syncedNotified,
+              syncedAppleMore: m.syncedAppleMore,
               errors: { syncFailed: m.syncFailed, syncOff: m.syncOff },
             }}
           />

@@ -1,7 +1,7 @@
 import "server-only";
 import { requireRole } from "./auth";
 import { createClient } from "./supabase/server";
-import { googleWalletStatus } from "./wallet/google/sync";
+import { walletStatus } from "./wallet/updates";
 
 /**
  * Data for the admin pages. Everything is read as the signed-in admin; the
@@ -61,7 +61,7 @@ export async function loadWalletAdmin() {
   const [cafe, themes, status] = await Promise.all([
     supabase.from("cafes").select("name, stamps_required").eq("id", profile.cafe_id!).single(),
     supabase.from("wallet_themes").select("*").eq("cafe_id", profile.cafe_id!).order("starts_on", { ascending: true }),
-    googleWalletStatus(profile.cafe_id!),
+    walletStatus(profile.cafe_id!),
   ]);
   if (cafe.error) throw cafe.error;
   if (themes.error) throw themes.error;

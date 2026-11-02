@@ -5,7 +5,9 @@ import { revalidatePath } from "next/cache";
 import { getProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { applePassSerials } from "@/lib/wallet/apple/sync";
 import { retireGooglePass } from "@/lib/wallet/google/sync";
+import { pushApplePassesLater } from "@/lib/wallet/updates";
 
 export type AccountFormState = { ok?: boolean; error?: string; value?: string };
 
@@ -27,7 +29,7 @@ export async function updateName(_prev: AccountFormState, formData: FormData): P
 /**
  * Deletes the signed-in customer's sign-in account. The database removes
  * their profile, card, stamps and coupons with it (on delete cascade), and
- * their Google Wallet pass, if any, is emptied.
+ * their Google and Apple Wallet passes, if any, are emptied.
  */
 export async function deleteAccount(_prev: AccountFormState, formData: FormData): Promise<AccountFormState> {
   const profile = await getProfile();
@@ -35,11 +37,14 @@ export async function deleteAccount(_prev: AccountFormState, formData: FormData)
   if (profile.role !== "customer") return { error: "staff" };
   if (formData.get("confirm") !== "on") return { error: "mustConfirm" };
 
-  // Empty their Google Wallet pass while we still know which one it is.
+  // Empty their wallet passes while we still know which ones they are. The
+  // database empties the Apple pass with the card; its phones are then told.
   await retireGooglePass(profile.id);
+  const appleSerials = await applePassSerials(profile.id);
 
   const { error } = await createAdminClient().auth.admin.deleteUser(profile.id);
   if (error) return { error: "failed" };
+  await pushApplePassesLater(appleSerials);
 
   // Clear this browser's session cookies; the server session is already gone.
   const supabase = await createClient();

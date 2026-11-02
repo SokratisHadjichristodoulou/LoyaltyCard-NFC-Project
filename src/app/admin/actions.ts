@@ -2,11 +2,10 @@
 
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { after } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { siteOrigin } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isGoogleWalletEnabled, syncGoogleTheme } from "@/lib/wallet/google/sync";
+import { isAnyWalletEnabled, syncWalletThemes, syncWalletThemesLater } from "@/lib/wallet/updates";
 import { isBuiltinHero } from "@/lib/wallet/themes";
 
 // Admin writes. Each checks the role first, then writes with the service role,
@@ -72,8 +71,8 @@ export async function updateSettings(_prev: FormState, formData: FormData): Prom
     .update({ stamps_required: stamps, coupon_valid_days: days, stamp_cooldown_seconds: Math.round(minutes * 60) })
     .eq("id", profile.cafe_id!);
   if (error) return { error: "failed", values: typed };
-  // The pass shows the number of stamps for a free coffee.
-  await syncWalletLater();
+  // The passes show the number of stamps for a free coffee: bring them up to date.
+  await syncWalletThemesLater();
   revalidatePath("/admin", "layout");
   return { ok: true };
 }
@@ -82,18 +81,6 @@ export async function updateSettings(_prev: FormState, formData: FormData): Prom
 // Wallet themes
 // ---------------------------------------------------------------------------
 
-/** After a theme changes, bring the Google Wallet passes up to date (in the background). */
-async function syncWalletLater() {
-  if (!isGoogleWalletEnabled()) return;
-  const origin = await siteOrigin();
-  after(async () => {
-    try {
-      await syncGoogleTheme(origin);
-    } catch (error) {
-      console.error("Google Wallet: theme update failed", error);
-    }
-  });
-}
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -143,7 +130,7 @@ export async function addWalletTheme(_prev: FormState, formData: FormData): Prom
     notify: typed.notify === "on",
   });
   if (error) return { error: "failed", values: typed };
-  await syncWalletLater();
+  await syncWalletThemesLater();
   revalidatePath("/admin/wallet");
   return { ok: true };
 }
@@ -153,7 +140,7 @@ export async function setWalletThemeActive(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   const active = formData.get("active") === "true";
   await createAdminClient().from("wallet_themes").update({ active }).eq("id", id).eq("cafe_id", profile.cafe_id!);
-  await syncWalletLater();
+  await syncWalletThemesLater();
   revalidatePath("/admin/wallet");
 }
 
@@ -161,20 +148,20 @@ export async function deleteWalletTheme(formData: FormData) {
   const profile = await requireRole("admin");
   const id = String(formData.get("id") ?? "");
   await createAdminClient().from("wallet_themes").delete().eq("id", id).eq("cafe_id", profile.cafe_id!);
-  await syncWalletLater();
+  await syncWalletThemesLater();
   revalidatePath("/admin/wallet");
 }
 
 /** "Update all cards now": waits for Google, so the admin sees whether it worked. */
 export async function syncWalletNow(_prev: FormState): Promise<FormState> {
   await requireRole("admin");
-  if (!isGoogleWalletEnabled()) return { error: "syncOff" };
+  if (!isAnyWalletEnabled()) return { error: "syncOff" };
   try {
-    const { notified } = await syncGoogleTheme(await siteOrigin());
+    const { googleNotified, appleMore } = await syncWalletThemes(await siteOrigin(), { force: true });
     revalidatePath("/admin/wallet");
-    return { ok: true, values: { notified: notified ? "1" : "" } };
+    return { ok: true, values: { notified: googleNotified ? "1" : "", appleMore: appleMore ? "1" : "" } };
   } catch (error) {
-    console.error("Google Wallet: theme update failed", error);
+    console.error("Wallet: theme update failed", error);
     return { error: "syncFailed" };
   }
 }
