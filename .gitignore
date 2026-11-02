@@ -15,9 +15,5 @@ next-env.d.ts
 .env*.local
 .dev.vars*
 
-# local editor / tool config
-.claude/
-CLAUDE.md
-
 # os
 .DS_Store
