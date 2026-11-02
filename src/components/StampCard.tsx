@@ -1,6 +1,6 @@
 import type { Translator } from "@/i18n/translate";
 import type { Card } from "@/lib/card";
-import { cardPalette, heroImageUrl, type Theme } from "@/lib/wallet/themes";
+import { cardPalette, DEFAULT_THEME, heroImageUrl, type Theme } from "@/lib/wallet/themes";
 import { CupGlyph, StampDefs, StampMark } from "./Stamp";
 import { Celebration } from "./Celebration";
 
@@ -9,15 +9,14 @@ const TILTS = [-9, 6, -3, 11, -7, 4, -12, 8, -5, 3];
 const tilt = (i: number) => TILTS[i % TILTS.length];
 
 /**
- * The stamp card. With a seasonal theme (Admin → Wallet) the card itself takes
- * it on: the theme's banner across the top, its colour for the card, and its
- * greeting in place of the rule at the bottom.
+ * The stamp card, in the same look as the wallet passes: a seasonal theme
+ * (Admin → Wallet) when one is on, otherwise the everyday look (espresso with
+ * the coffee-bean banner). The theme's banner goes across the top, its colour
+ * is the card's, and its greeting (if any) replaces the rule at the bottom.
  */
 export function StampCard({ card, t, theme = null }: { card: Card; t: Translator; theme?: Theme | null }) {
-  const themed = theme?.id ? theme : null;
-  const greeting = themed
-    ? (t.locale === "el" ? themed.message.el || themed.message.en : themed.message.en || themed.message.el)
-    : null;
+  const look = theme ?? DEFAULT_THEME;
+  const greeting = t.locale === "el" ? look.message.el || look.message.en : look.message.en || look.message.el;
   const goal = card.goal;
   const filled = Math.min(card.stamps, goal);
   const complete = filled >= goal;
@@ -31,17 +30,15 @@ export function StampCard({ card, t, theme = null }: { card: Card; t: Translator
         className={`relative overflow-hidden rounded-[1.75rem] border border-line bg-crema text-espresso shadow-[0_1px_0_#fff_inset,0_18px_40px_-24px_rgb(58_22_9/0.45),0_2px_6px_-2px_rgb(58_22_9/0.12)] ${
           newestIndex >= 0 ? "card-thud" : ""
         }`}
-        style={themed ? cardPalette(themed.backgroundColor) : undefined}
+        style={cardPalette(look.backgroundColor)}
       >
-        {themed && (
-          <img
-            src={heroImageUrl(themed.heroImage, "")}
-            alt=""
-            width={1032}
-            height={336}
-            className="block aspect-[1032/336] w-full object-cover"
-          />
-        )}
+        <img
+          src={heroImageUrl(look.heroImage, "")}
+          alt=""
+          width={1032}
+          height={336}
+          className="block aspect-[1032/336] w-full object-cover"
+        />
 
         <div className="relative">
         {/* Ticket notches, on the dotted line under the header */}
