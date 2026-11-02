@@ -1,6 +1,7 @@
 import "server-only";
 import { cafeSlug } from "./env";
 import { createAdminClient } from "./supabase/admin";
+import { updateWalletPassesLater } from "./wallet/updates";
 
 export type StampOutcome =
   | { result: "stamped"; stampCount: number }
@@ -15,6 +16,7 @@ export type StampOutcome =
  * (an NFC tap, or the dev-only test button). A tap passes its tag and
  * counter, so the same tap can never give two stamps. A simple tag (fixed
  * link) has no counter: only the cafe's usual wait between stamps applies.
+ * A customer who added their card to Google or Apple Wallet gets the pass updated too.
  */
 export async function stampCustomer(
   customerId: string,
@@ -34,6 +36,11 @@ export async function stampCustomer(
   if (error || !data) throw error ?? new Error("record_stamp returned nothing");
 
   const stampCount = data.stamp_count;
+
+  // The customer's wallet passes follow, after the response is sent.
+  if (data.result === "stamped" || data.result === "coupon_issued") {
+    await updateWalletPassesLater(customerId, { couponIssued: data.result === "coupon_issued" });
+  }
 
   if (data.result === "coupon_issued") {
     return { result: "coupon_issued", stampCount, couponCode: data.coupon_code! };

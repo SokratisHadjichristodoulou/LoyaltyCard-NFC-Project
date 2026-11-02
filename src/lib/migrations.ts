@@ -11,6 +11,8 @@ export const EXPECTED_MIGRATIONS = [
   "20261021000600", // NFC tap counters, one stamp per tap
   "20261021000700", // migration tracking
   "20261028000100", // simple tags (fixed link, one stamp per day)
+  "20261102000100", // Google Wallet passes and seasonal themes
+  "20261103000100", // Apple Wallet passes, device registrations and pushes
 ] as const;
 
 export type SchemaStatus =
