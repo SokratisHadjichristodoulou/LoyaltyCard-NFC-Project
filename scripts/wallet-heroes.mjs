@@ -137,14 +137,14 @@ const designs = {
       </g>`;
     const team = [[50, -4], [98, -8], [146, -12, true]];
     const sleighScene = `
-      <g transform="translate(70 138) rotate(-6) scale(1.05)">
+      <g transform="translate(62 152) rotate(-6) scale(1.4)">
         ${[0, 1, 2, 3].map((i) => `<circle cx="${-34 - i * 12}" cy="${6 + i * 2}" r="${1.6 - i * 0.3}" fill="#efc874" opacity="${0.8 - i * 0.18}" />`).join("")}
         <path d="M24 -1 L${team[team.length - 1][0] - 8} ${team[team.length - 1][1] - 2}" stroke="#efc874" stroke-width="1.2" opacity=".8" />
         ${sleigh}
         ${team.map(([x, y, r]) => reindeer(x, y, r)).join("")}
       </g>`;
     // Keep snowflakes off the sleigh, so the small figures read clearly.
-    const awayFromSleigh = (p) => !(p.x < 330 && p.y > 70 && p.y < 185);
+    const awayFromSleigh = (p) => !(p.x < 370 && p.y > 60 && p.y < 210);
     return svg(
       "#7d1d1d",
       `${scatter(7, 30, { clear: 160 }).map((p) => ({ ...p, y: Math.max(p.y, 90) })).filter(awayFromSleigh).map((p) => at(p, flake)).join("")}
