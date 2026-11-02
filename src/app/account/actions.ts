@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getProfile } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { retireGooglePass } from "@/lib/wallet/google/sync";
 
 export type AccountFormState = { ok?: boolean; error?: string; value?: string };
 
@@ -25,13 +26,17 @@ export async function updateName(_prev: AccountFormState, formData: FormData): P
 
 /**
  * Deletes the signed-in customer's sign-in account. The database removes
- * their profile, card, stamps and coupons with it (on delete cascade).
+ * their profile, card, stamps and coupons with it (on delete cascade), and
+ * their Google Wallet pass, if any, is emptied.
  */
 export async function deleteAccount(_prev: AccountFormState, formData: FormData): Promise<AccountFormState> {
   const profile = await getProfile();
   if (!profile) redirect(`/login?next=${encodeURIComponent("/account")}`);
   if (profile.role !== "customer") return { error: "staff" };
   if (formData.get("confirm") !== "on") return { error: "mustConfirm" };
+
+  // Empty their Google Wallet pass while we still know which one it is.
+  await retireGooglePass(profile.id);
 
   const { error } = await createAdminClient().auth.admin.deleteUser(profile.id);
   if (error) return { error: "failed" };

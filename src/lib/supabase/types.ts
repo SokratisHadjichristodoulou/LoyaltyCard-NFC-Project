@@ -17,6 +17,23 @@ export type AdminStats = {
   daily: { day: string; stamps: number; redeemed: number }[];
 };
 
+export type WalletThemeRow = {
+  id: string;
+  cafe_id: string;
+  name: string;
+  background_color: string;
+  /** A built-in banner name (e.g. "christmas") or an https address. */
+  hero_image: string;
+  message_el: string | null;
+  message_en: string | null;
+  starts_on: string; // YYYY-MM-DD
+  ends_on: string; // YYYY-MM-DD
+  repeats_yearly: boolean;
+  notify: boolean;
+  active: boolean;
+  created_at: string;
+};
+
 type Table<Row, Required extends keyof Row = never> = {
   Row: Row;
   Insert: Partial<Row> & Pick<Row, Required>;
@@ -34,6 +51,7 @@ export type Database = {
         stamps_required: number;
         coupon_valid_days: number;
         stamp_cooldown_seconds: number;
+        wallet_theme_key: string | null;
         created_at: string;
       }, "name" | "slug">;
       profiles: Table<{
@@ -61,6 +79,7 @@ export type Database = {
         cafe_id: string;
         customer_id: string;
         stamp_count: number;
+        google_wallet_object_id: string | null;
         updated_at: string;
       }, "cafe_id" | "customer_id">;
       stamps: Table<{
@@ -82,6 +101,7 @@ export type Database = {
         redeemed_at: string | null;
         redeemed_by: string | null;
       }, "cafe_id" | "customer_id" | "expires_at">;
+      wallet_themes: Table<WalletThemeRow, "cafe_id" | "name" | "background_color" | "hero_image" | "starts_on" | "ends_on">;
     };
     Views: Record<string, never>;
     Functions: {
@@ -148,6 +168,22 @@ export type Database = {
           coupon_code: string | null;
           retry_after_seconds: number | null;
         }[];
+      };
+      wallet_pass_data: {
+        Args: { p_cafe_id: string; p_customer_id: string };
+        Returns: {
+          card_id: string;
+          object_id: string | null;
+          stamp_count: number;
+          stamps_required: number;
+          display_name: string | null;
+          coupon_code: string | null;
+          coupon_expires_at: string | null;
+        }[];
+      };
+      wallet_expire_coupons: {
+        Args: { p_cafe_id: string; p_limit: number };
+        Returns: { customer_id: string; has_pass: boolean }[];
       };
       find_coupon_for_staff: {
         Args: { p_code: string };

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { areaRoles, getProfile } from "@/lib/auth";
 import { siteOrigin } from "@/lib/site";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isGoogleWalletEnabled, refreshGooglePassLater } from "@/lib/wallet/google/sync";
 
 /**
  * POST /api/redeem  { "code": "CP-XXXX-XXXX-XXXX-XXXX" }
@@ -27,6 +28,12 @@ export async function POST(request: NextRequest) {
     .rpc("redeem_coupon", { p_code: code, p_staff_id: profile.id })
     .single();
   if (error || !data) return NextResponse.json({ error: "server_error" }, { status: 500 });
+
+  // Take the used coupon's QR code off the customer's Google Wallet pass.
+  if ((data.result === "redeemed" || data.result === "expired") && data.code && isGoogleWalletEnabled()) {
+    const { data: coupon } = await createAdminClient().from("coupons").select("customer_id").eq("code", data.code).maybeSingle();
+    if (coupon) await refreshGooglePassLater(coupon.customer_id);
+  }
 
   return NextResponse.json({
     result: data.result,

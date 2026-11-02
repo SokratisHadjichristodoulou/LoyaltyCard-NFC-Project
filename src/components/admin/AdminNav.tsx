@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Translator } from "@/i18n/translate";
 import { checkSchema } from "@/lib/schema-check";
 
-export type AdminSection = "overview" | "customers" | "tags" | "settings";
+export type AdminSection = "overview" | "customers" | "tags" | "settings" | "wallet";
 
 // "scanner" leaves the admin for the staff scanner, which admins can use too.
 const sections: { id: AdminSection | "scanner"; href: string }[] = [
@@ -10,6 +10,7 @@ const sections: { id: AdminSection | "scanner"; href: string }[] = [
   { id: "customers", href: "/admin/customers" },
   { id: "tags", href: "/admin/tags" },
   { id: "settings", href: "/admin/settings" },
+  { id: "wallet", href: "/admin/wallet" },
   { id: "scanner", href: "/staff" },
 ];
 

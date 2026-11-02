@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { getT } from "@/i18n/server";
 import { getCardView } from "@/lib/card-data";
 import { Shell } from "@/components/Shell";
@@ -6,8 +7,32 @@ import { StampCard } from "@/components/StampCard";
 import { withState } from "@/components/href";
 import { addTestStamp } from "@/app/actions/dev-stamp";
 import { isDevStampEnabled } from "@/lib/env";
+import { GoogleWalletButton } from "@/components/wallet/GoogleWalletButton";
+import { ThemeBanner } from "@/components/wallet/ThemeBanner";
+import { currentTheme, isGoogleWalletEnabled } from "@/lib/wallet/google/sync";
+import { presetAsTheme, themePresets } from "@/lib/wallet/presets";
+import { cyprusToday, DEFAULT_THEME, type Theme } from "@/lib/wallet/themes";
 
-type Props = { searchParams: Promise<{ state?: string; stamped?: string; cooldown?: string; daily?: string }> };
+type Props = {
+  searchParams: Promise<{ state?: string; stamped?: string; cooldown?: string; daily?: string; wallet?: string; theme?: string }>;
+};
+
+/** Google Wallet isn't on iPhone or iPad (they get Apple Wallet later). */
+function isAppleMobile(userAgent: string | null) {
+  return /iPhone|iPad|iPod/i.test(userAgent ?? "");
+}
+
+/** The seasonal theme on today; in the mock preview, `?theme=christmas` etc. */
+async function themeFor(source: "db" | "mock", preview: string | undefined): Promise<Theme> {
+  if (source === "mock") {
+    const preset = themePresets(cyprusToday()).find((p) => p.id === preview && p.id !== "blank");
+    return preset ? presetAsTheme(preset) : DEFAULT_THEME;
+  }
+  return currentTheme().catch((error) => {
+    console.error("Could not load the wallet theme", error);
+    return DEFAULT_THEME;
+  });
+}
 
 function greetingKey() {
   const hour = Number(
@@ -26,6 +51,8 @@ export default async function HomePage({ searchParams }: Props) {
   const complete = card.stamps >= card.goal && hasCoupon;
   const cooldownSeconds = Number(params.cooldown);
   const cooldownMinutes = Number.isFinite(cooldownSeconds) && cooldownSeconds > 0 ? Math.ceil(cooldownSeconds / 60) : 0;
+  const theme = await themeFor(source, params.theme);
+  const showWallet = (source === "mock" || isGoogleWalletEnabled()) && !isAppleMobile((await headers()).get("user-agent"));
 
   return (
     <Shell t={t} active="card" state={state}>
@@ -68,6 +95,8 @@ export default async function HomePage({ searchParams }: Props) {
         </Link>
       )}
 
+      {theme.id && <ThemeBanner theme={theme} locale={t.locale} />}
+
       <StampCard card={card} t={t} />
 
       {complete && (
@@ -83,6 +112,8 @@ export default async function HomePage({ searchParams }: Props) {
           </Link>
         </div>
       )}
+      {showWallet && <GoogleWalletButton t={t} added={!!card.inGoogleWallet} failed={params.wallet === "error"} />}
+
       {source === "db" && isDevStampEnabled() && (
         <form action={addTestStamp} className="mt-8 rounded-2xl border border-dashed border-line px-4 py-3">
           <p className="mb-2 text-[0.7rem] font-semibold tracking-[0.2em] text-muted uppercase">{t("dev.label")}</p>

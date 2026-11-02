@@ -8,7 +8,12 @@ import { siteOrigin } from "./site";
  * it up and redeems it once, so a screenshot cannot be used twice.
  */
 export async function couponCheckUrl(code: string) {
-  return `${await siteOrigin()}/staff?code=${encodeURIComponent(code)}`;
+  return couponCheckUrlAt(await siteOrigin(), code);
+}
+
+/** The same, for a known site origin (e.g. the wallet pass's QR code). */
+export function couponCheckUrlAt(origin: string, code: string) {
+  return `${origin}/staff?code=${encodeURIComponent(code)}`;
 }
 
 /** The QR code as an SVG string, dark on white for reliable scanning. */

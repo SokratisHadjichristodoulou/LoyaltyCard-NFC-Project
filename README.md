@@ -5,7 +5,8 @@ A digital stamp card for Coffee Pause Cyprus.
 Customers get one stamp per coffee. The barista taps an NFC tag against the
 customer's phone, which opens this site and adds a stamp. At 10 stamps the
 customer receives a free-coffee coupon with a QR code that staff scan to check
-and redeem it.
+and redeem it. Customers can also keep the card in Google Wallet, where it
+updates by itself and changes look for the seasons (see Google Wallet).
 
 The site runs on a hidden subdomain of the cafe's domain and is not linked
 from the main website. Search engines are blocked by `public/robots.txt`, a
@@ -144,6 +145,7 @@ service role and signups can never grant `staff` or `admin`.
 | `cards`    | One per customer per cafe, with `stamp_count`                          |
 | `stamps`   | Audit log of every stamp given                                         |
 | `coupons`  | Free-coffee coupons: unguessable `code` (e.g. `CP-7K4Q-29XM-HD3P-WR8N`), `status`, expiry, who redeemed it |
+| `wallet_themes` | Seasonal looks for the Google Wallet pass: colour, banner, greeting, dates, `notify`. `cards.google_wallet_object_id` marks a card that has a pass |
 
 Every table has a `cafe_id` (on `profiles` it is empty for customers), so more
 cafes can be added later without a redesign.
@@ -270,6 +272,8 @@ Use a higher counter for each test tap.
   up), and deactivate one that gets lost. The NFC step uses these tags.
 - **Settings**: stamps for a free coffee, how long coupons last, and the wait
   between stamps. Changes apply to the next stamps and new coupons.
+- **Wallet**: whether Google Wallet is on, how many cards are in it, and the
+  seasonal themes (see Google Wallet).
 
 Reports come from database functions (`admin_stats`, `admin_customers`,
 `admin_activity`, `admin_stamp_log`) that return only the caller's own cafe
@@ -286,7 +290,9 @@ coupon at 10, the card starting again, and that only the server can stamp.
 `supabase/tests/delete-account.test.sql` proves deleting an account removes all
 of the customer's data. `supabase/tests/migrations.test.sql` proves the
 migration record, including that a skipped migration is not recorded.
-`supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
+`supabase/tests/wallet.test.sql` proves the Google Wallet parts: only the
+server writes themes and pass ids, the pass shows the right coupon, and
+expired coupons are cleared in batches. `supabase/tests/redeem.test.sql` proves redeeming: only real staff of the
 same cafe, once only, never an expired coupon. `supabase/tests/admin.test.sql`
 proves the admin reports: right numbers for the admin's cafe, and nothing for
 staff, customers, signed-out visitors or admins of other cafes.
@@ -329,6 +335,111 @@ the errors.
 | `/admin`  | admin           | redirect to login  | "not allowed" page (403)   |
 
 Both areas check the role again on the server.
+
+## Google Wallet
+
+Customers on Android (and anyone with a Google account) can press **Add to
+Google Wallet** under their card. The pass then follows the card by itself:
+
+| When                       | The pass                                                        |
+| -------------------------- | --------------------------------------------------------------- |
+| A stamp is added           | shows the new count, e.g. `7/10` (no notification)              |
+| The 10th stamp             | shows the coupon's QR code and its expiry, and the phone gets a "Your free coffee is ready ☕" notification |
+| Staff redeem the coupon    | the QR code disappears                                          |
+| The coupon expires unused  | the QR code disappears (within a day, by the daily job)         |
+| A theme starts or changes  | every pass gets the new colour, banner and greeting at once      |
+| The customer deletes their account | the pass is emptied (no name, stamps or coupon) and moved to expired passes |
+
+The QR code on the pass is the same as on the coupon page, so staff scan it
+the same way. If a customer has two usable coupons, the pass shows the one
+that expires first. Pressing the button again is harmless (same pass).
+
+How it works: one Google Wallet *loyalty class* per cafe holds the look
+(logo, colour, banner, greeting), and one *loyalty object* per card holds the
+customer's stamps, name and coupon. The server updates the object after each
+stamp and redeem (`src/lib/stamping.ts`, `/api/redeem`), after the response
+is sent, so a slow Google never slows the tap, and a Google error never loses
+a stamp. Everything lives in `src/lib/wallet/`. The button is hidden on
+iPhone and iPad (Apple Wallet is a separate, later step).
+
+### Themes
+
+**Admin → Wallet** shows how the cards look today and the list of themes. A
+theme has a colour, a banner (one of the built-in ones or your own image), an
+optional greeting in Greek and English, and dates. Start from a preset
+(Christmas, Easter, Summer, Autumn) and adjust it; the preview shows the card
+as you type.
+
+- **Every year** themes only use the day and month, and may cross New Year
+  (1 Dec to 6 Jan). Orthodox Easter moves, so the Easter preset is for one
+  year: it is filled in with the coming Easter, a week either side.
+- When themes overlap, the one that started most recently shows.
+- **Notify customers when it starts** sends one phone notification to every
+  card holder when the theme begins. Google allows only a few notifications
+  per pass per day.
+- The same theme shows as a banner above the stamp card on the website.
+- Saving, switching off or deleting a theme updates the passes straight away.
+  Themes start and end on their dates through the daily job; **Update all
+  cards now** does it at once.
+- Your own banner: an `https` address of a 1032 × 336 PNG or JPG that stays
+  online (Google loads it from there).
+
+The built-in banners are `public/wallet/heroes/*.png`, drawn by
+`scripts/wallet-heroes.mjs` (`node scripts/wallet-heroes.mjs` redraws them;
+needs Playwright). Preview them on the card with mock data:
+`MOCK_DATA=1 npm run dev`, then `/?theme=christmas` (or `easter`, `summer`,
+`autumn`).
+
+### The daily job
+
+`.github/workflows/wallet-daily.yml` runs just after midnight in Cyprus. It
+calls `POST /api/wallet/daily` with `Authorization: Bearer
+<WALLET_CRON_SECRET>`, which switches the passes to the day's theme and takes
+expired coupons off them, 10 at a time (so one call stays within the Workers
+free plan's limit of 50 outgoing requests); the workflow calls again while
+the answer says `"more":true`. Run it by hand from **Actions → Wallet daily →
+Run workflow**. Without the `WALLET_CRON_SECRET` repository secret it does
+nothing.
+
+### Setting up Google Wallet
+
+1. **Issuer account**: in the [Google Pay & Wallet Console](https://pay.google.com/business/console),
+   open **Google Wallet API** and create the issuer account. Note the
+   **Issuer ID** (a long number).
+2. **Service account**: in the [Google Cloud console](https://console.cloud.google.com),
+   create (or pick) a project, enable the **Google Wallet API**, then
+   **IAM & Admin → Service accounts → Create**. On the new account, **Keys →
+   Add key → JSON** downloads its key file. Keep it private.
+3. Back in the Wallet console, **Users → Invite a user**: the service
+   account's email (`…@….iam.gserviceaccount.com`), access level
+   **Developer**.
+4. **Settings**, locally in `.env.local` and on the Worker as **Secrets**
+   (Cloudflare → the Worker → Settings → Variables and Secrets):
+   - `GOOGLE_WALLET_ISSUER_ID`: the Issuer ID
+   - `GOOGLE_WALLET_KEY`: the whole JSON key file, pasted as it is
+   - `WALLET_CRON_SECRET`: `openssl rand -hex 32`; add the same value in
+     GitHub as the repository secret `WALLET_CRON_SECRET`
+5. Redeploy, then open **Admin → Wallet**: it should say Google Wallet is on.
+   Press **Update all cards now** once, which creates the card design at
+   Google.
+
+**Testing (demo mode).** Until Google approves the issuer account for
+publishing, only the test users listed in the Wallet console can save
+passes. Add your own Google account there, then on an Android phone: sign in
+to the card, press **Add to Google Wallet**, save. Get a stamp: the pass shows
+it within seconds. Collect 10 (with `stamp_cooldown_seconds = 0` while
+testing): the notification and QR code arrive. Redeem it at `/staff`: the QR
+code disappears.
+
+**Going live.** In the Wallet console, request **publishing access**. Google
+reviews the pass and the site. Their brand rules ask for the official "Add to
+Google Wallet" button, so before the review replace the button in
+`src/components/wallet/GoogleWalletButton.tsx` with Google's button artwork
+(Greek and English) from the Google Wallet brand guidelines.
+
+**If the logo or banner doesn't show** on the pass: Google downloads them
+from `https://card.…/wallet/…`. These must be public (they are; `robots.txt`
+allows `/wallet/`), and your own banner addresses must work without signing in.
 
 ## Privacy and accounts
 
@@ -387,11 +498,13 @@ missing from `en.json` fails the typecheck.
 | ------------------------------------------------- | ------------------------- |
 | Programming and testing real NTAG 424 tags on iPhone and Android | when the tags arrive |
 | Mock data and preview bar (dev only, `MOCK_DATA=1`) | removed in a later step |
+| Apple Wallet pass (Google Wallet is done)         | a later step              |
 
 ## Project structure
 
 ```
-public/                 logo.png, robots.txt (disallow all)
+public/                 logo.png, robots.txt (disallow all but /wallet/)
+public/wallet/          logo and seasonal banners loaded by Google Wallet
 references/             design screenshots (not deployed)
 wrangler.jsonc          Cloudflare Workers config
 open-next.config.ts     Cloudflare adapter config
@@ -399,6 +512,7 @@ scripts/test-db.sh      migrations + database tests on a throwaway Postgres
 scripts/nfc-keys.ts     prints one tag's keys and SDM settings (npm run nfc:keys)
 scripts/nfc-tap-url.ts  makes a test tap URL (npm run nfc:url)
 scripts/db-check.ts     checks the database has every migration (npm run db:check)
+scripts/wallet-heroes.mjs draws the built-in Google Wallet banners
 src/
   proxy.ts              session refresh, /staff and /admin protection
   app/
@@ -414,8 +528,10 @@ src/
     api/health/         200 when the database is reachable and up to date
     not-allowed/        shown for the wrong role
     tap/                opened by the NFC tag: verifies and stamps; complete/ after sign-in; problem/
+    wallet/google/      "Add to Google Wallet": creates the pass, sends the customer to Google
+    api/wallet/daily/   daily job: today's theme, expired coupons off the passes
     staff/              coupon scanner and redeem (protected)
-    admin/              dashboard: overview, customers, tags, settings (protected)
+    admin/              dashboard: overview, customers, tags, settings, wallet themes (protected)
     api/redeem/         redeem a coupon (staff only)
     api/export/         CSV export (admins only)
   components/           (staff/: QR scanner, redeem button; admin/: nav, tiles, chart, forms)
@@ -429,6 +545,7 @@ src/
     coupons.ts          coupon QR code
     coupon-code.ts      reading a code from a scan or typed input
     stamping.ts         adds a stamp through record_stamp
+    wallet/             Google Wallet: themes, presets, pass design, API client, sync
     mock-data.ts        dev-only preview states
   i18n/                 el.json, en.json
   styles/               global styles
@@ -461,7 +578,9 @@ live site too.
 3. Have these values ready: `NEXT_PUBLIC_SUPABASE_URL`,
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
    `NEXT_PUBLIC_SITE_URL` (`https://card.coffeepause.com.cy`), `NFC_TAG_SECRET`,
-   and `CAFE_SLUG` if not the default. Don't set `MOCK_DATA` or `DEV_STAMPS`.
+   and `CAFE_SLUG` if not the default. For Google Wallet (optional, can come
+   later): `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_KEY` and
+   `WALLET_CRON_SECRET` (see Google Wallet). Don't set `MOCK_DATA` or `DEV_STAMPS`.
 
 ### Automatic deploys (GitHub Actions)
 
@@ -477,11 +596,15 @@ secret**, add:
 - `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the "Edit Cloudflare
   Workers" template, limited to this account and the `coffeepause.app` zone
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: the Supabase `anon` key
+- `WALLET_CRON_SECRET` (with Google Wallet): the same value as on the Worker,
+  for the daily wallet job
 
 On the Worker in Cloudflare (set once, kept by every deploy):
 
 - **Settings → Variables and Secrets**: `SUPABASE_SERVICE_ROLE_KEY`,
-  `NFC_TAG_SECRET` (and `CAFE_SLUG`, if used), each as type **Secret**.
+  `NFC_TAG_SECRET` (and `CAFE_SLUG`, if used; with Google Wallet also
+  `GOOGLE_WALLET_ISSUER_ID`, `GOOGLE_WALLET_KEY`, `WALLET_CRON_SECRET`), each
+  as type **Secret**.
   Plain-text variables set here would be replaced by `wrangler.jsonc` on the
   next deploy.
 - **Settings → Domains & Routes**: the custom domain
@@ -507,7 +630,8 @@ only.
    address, and add `https://card.…/**` to **Redirect URLs**.
 2. Open `https://card.…/api/health`: it must say `{"status":"ok"}`. Point an
    uptime monitor at it.
-3. Check `https://card.…/robots.txt` says `Disallow: /`.
+3. Check `https://card.…/robots.txt` says `Disallow: /` (with `Allow: /wallet/`
+   for the Google Wallet images only).
 4. Sign in with your own email, make yourself admin, open `/admin`.
 5. When the NFC tags arrive, program one and tap it with an iPhone and an
    Android phone.

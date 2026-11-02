@@ -167,6 +167,7 @@
       "customers": "Customers",
       "tags": "NFC tags",
       "settings": "Settings",
+      "wallet": "Wallet",
       "scanner": "Scanner"
     },
     "kpi": {
@@ -259,6 +260,74 @@
         "failed": "They weren't saved. Try again."
       }
     },
+    "wallet": {
+      "title": "Wallet & themes",
+      "intro": "How every card saved in Google Wallet looks. A theme changes the colour and banner of all cards at once, on the days you choose.",
+      "statusOn": "Google Wallet is on.",
+      "statusOff": "Google Wallet isn't set up yet (GOOGLE_WALLET_ISSUER_ID and GOOGLE_WALLET_KEY, see the README). You can already add themes.",
+      "passes_one": "{count} card in Google Wallet",
+      "passes_other": "{count} cards in Google Wallet",
+      "now": "On the cards now",
+      "everyday": "The everyday look",
+      "syncNow": "Update all cards now",
+      "synced": "All cards updated.",
+      "syncedNotified": "All cards updated, and customers were notified.",
+      "syncFailed": "Google Wallet didn't accept the update. Try again, or check the settings.",
+      "syncOff": "Set up Google Wallet first.",
+      "themes": "Themes",
+      "empty": "No themes yet. Cards have the everyday look all year.",
+      "addTitle": "New theme",
+      "preset": "Start from",
+      "presets": {
+        "christmas": "Christmas",
+        "easter": "Easter",
+        "summer": "Summer",
+        "autumn": "Autumn",
+        "blank": "Blank"
+      },
+      "name": "Name",
+      "color": "Card colour",
+      "banner": "Banner",
+      "banners": {
+        "default": "Coffee Pause",
+        "christmas": "Christmas",
+        "easter": "Easter",
+        "summer": "Summer",
+        "autumn": "Autumn"
+      },
+      "ownImage": "Or your own image (https address)",
+      "ownImageHelp": "1032 × 336 pixels, PNG or JPG. Leave empty to use the banner above.",
+      "messageEl": "Greeting in Greek (optional)",
+      "messageEn": "Greeting in English (optional)",
+      "messagePlaceholderEl": "π.χ. Καλά Χριστούγεννα!",
+      "messagePlaceholderEn": "e.g. Merry Christmas!",
+      "from": "From",
+      "until": "Until",
+      "yearly": "Every year",
+      "yearlyHelp": "Only the day and month count. For Easter, which moves, untick this and set each year's dates.",
+      "notify": "Notify customers when it starts",
+      "notifyHelp": "Google allows only a few notifications a day. Keep it for the big holidays.",
+      "add": "Add theme",
+      "saved": "Theme saved.",
+      "errors": {
+        "name": "Give the theme a name (up to 40 characters).",
+        "color": "Pick a colour.",
+        "image": "The image must be an https address.",
+        "message": "A greeting can be up to 120 characters.",
+        "dates": "Check the dates: the end can't be before the start.",
+        "failed": "It wasn't saved. Try again."
+      },
+      "range": "{from} – {to}",
+      "everyYear": "every year",
+      "onNow": "On now",
+      "scheduled": "Scheduled",
+      "off": "Switched off",
+      "notifies": "Notifies",
+      "activate": "Switch on",
+      "deactivate": "Switch off",
+      "delete": "Delete",
+      "previewAlt": "Banner of the {name} theme"
+    },
     "schema": {
       "title": "The database is out of date",
       "missing": "Missing migrations: {list}. Until they run, some pages won't work.",
@@ -275,6 +344,26 @@
     "title": "You have a free coffee!",
     "body": "Show your coupon at the counter whenever you like.",
     "cta": "See your coupon"
+  },
+  "wallet": {
+    "add": "Add to Google Wallet",
+    "addHelp": "Your stamps and coupon on your phone, always up to date.",
+    "added": "Your card is in Google Wallet and updates by itself.",
+    "error": "We couldn't add your card to Google Wallet. Try again in a moment.",
+    "pass": {
+      "programName": "Stamp card",
+      "stamps": "Stamps",
+      "cardNumber": "Card No",
+      "name": "Name",
+      "ruleTitle": "How it works",
+      "ruleBody": "1 stamp for every coffee. At {goal} stamps, your next coffee is on us.",
+      "couponTitle": "Your free coffee is ready ☕",
+      "couponBody": "Show the QR code at the counter. Valid until {date}.",
+      "couponNotify": "Show your card's QR code at the counter.",
+      "openCard": "My card",
+      "themeHeader": "From {cafe}",
+      "themeNotify": "Your card has a new look."
+    }
   },
   "dev": {
     "label": "Test · dev only",
@@ -329,7 +418,7 @@
     },
     "who_sees": {
       "title": "Who sees your data",
-      "body": "The cafe owner sees your email, stamps and coupons. Staff only see the coupon they scan. The data is stored for us by Supabase (database and sign-in), the service that sends sign-in emails, and the company that hosts the site. We don't sell your data or give it to anyone else."
+      "body": "The cafe owner sees your email, stamps and coupons. Staff only see the coupon they scan. The data is stored for us by Supabase (database and sign-in), the service that sends sign-in emails, and the company that hosts the site. We don't sell your data or give it to anyone else. If you add your card to Google Wallet, Google also keeps your card number, your name (if you added one), your stamps and your coupon code, under Google's own privacy policy. If you delete your account, we also remove them from the card in Google Wallet."
     },
     "how_long": {
       "title": "How long",
