@@ -143,11 +143,29 @@ const designs = {
         ${sleigh}
         ${team.map(([x, y, r]) => reindeer(x, y, r)).join("")}
       </g>`;
-    // Keep snowflakes off the sleigh, so the small figures read clearly.
-    const awayFromSleigh = (p) => !(p.x < 370 && p.y > 60 && p.y < 210);
+    // Snowflakes, spread evenly: each one keeps a clear gap from the others,
+    // and they stay off the garland, the cup and the sleigh.
+    const flakes = (() => {
+      const r = rng(19);
+      const placed = [];
+      const free = (x, y) =>
+        y > 100 && y < H - 18 && x > 18 && x < W - 18 &&
+        !(x > 360 && x < 672) && // the cup and its steam
+        !(x < 380 && y < 215); // the sleigh
+      for (let tries = 0; tries < 4000 && placed.length < 24; tries++) {
+        const x = r() * W;
+        const y = r() * H;
+        const s = 0.55 + r() * 0.6;
+        const radius = 16 * s;
+        if (!free(x, y)) continue;
+        if (placed.some((p) => Math.hypot(p.x - x, p.y - y) < p.radius + radius + 22)) continue;
+        placed.push({ x, y, radius, s, a: r() * 60, o: 0.5 + s * 0.4 });
+      }
+      return placed;
+    })();
     return svg(
       "#7d1d1d",
-      `${scatter(7, 30, { clear: 160 }).map((p) => ({ ...p, y: Math.max(p.y, 90) })).filter(awayFromSleigh).map((p) => at(p, flake)).join("")}
+      `${flakes.map((p) => at(p, flake)).join("")}
       ${garland}${baubles}
       ${sleighScene}
       <g transform="translate(${W / 2} 206)">${cup({ steam: "#f3e6d0", extra: holly })}</g>`,
