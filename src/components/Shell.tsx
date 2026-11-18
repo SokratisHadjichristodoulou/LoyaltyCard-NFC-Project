@@ -6,7 +6,7 @@ import { LangToggle } from "./LangToggle";
 import { Footer } from "./Footer";
 import { PreviewBar } from "./PreviewBar";
 import { withState } from "./href";
-import { getUser } from "@/lib/auth";
+import { areaRoles, getProfile, getUser } from "@/lib/auth";
 import { isMockMode } from "@/lib/env";
 
 type Page = "card" | "coupon" | "how";
@@ -22,6 +22,7 @@ export async function Shell({
   active,
   state,
   wide = false,
+  onScanner = false,
   children,
 }: {
   t: Translator;
@@ -30,10 +31,15 @@ export async function Shell({
   state?: string;
   /** Wider column for admin tables on larger screens. */
   wide?: boolean;
+  /** The staff scanner itself, which needn't link to itself. */
+  onScanner?: boolean;
   children: React.ReactNode;
 }) {
   const preview = isMockMode();
   const signedIn = !preview && !!(await getUser());
+  // Staff and admins get a way into the scanner from every page.
+  const profile = signedIn && !onScanner ? await getProfile() : null;
+  const canScan = !!profile && areaRoles.staff.includes(profile.role);
   return (
     <div
       className={`mx-auto flex min-h-dvh w-full flex-col overflow-x-clip px-4 ${wide ? "max-w-md sm:max-w-3xl" : "max-w-md sm:max-w-lg"}`}
@@ -54,6 +60,18 @@ export async function Shell({
         </Link>
         <LangToggle locale={t.locale as Locale} label={t("header.languageLabel")} />
       </header>
+
+      {canScan && (
+        <Link
+          href="/staff"
+          className="mt-1 flex min-h-12 items-center justify-center gap-2 rounded-full bg-espresso px-5 font-semibold text-gold-light"
+        >
+          <svg aria-hidden viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16" />
+          </svg>
+          {t("staff.openScanner")}
+        </Link>
+      )}
 
       <nav aria-label={t("header.nav.label")} className="mt-2">
         <ul className="flex gap-1 border-b border-line">
