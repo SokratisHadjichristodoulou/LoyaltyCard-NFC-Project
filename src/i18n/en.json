@@ -129,6 +129,7 @@
     "back": "Back to my card"
   },
   "staff": {
+    "openScanner": "Scan a coupon",
     "title": "Scan a coupon",
     "intro": "Scan the customer's QR code. Your phone's own camera works too: the link opens here.",
     "startCamera": "Open the camera",

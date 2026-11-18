@@ -45,7 +45,7 @@ export default async function StaffPage({ searchParams }: Props) {
   const justRedeemed = params.done === "redeemed" && coupon?.status === "used";
 
   return (
-    <Shell t={t}>
+    <Shell t={t} onScanner>
       <h1 className="font-display text-[2.4rem] leading-none font-medium tracking-tight">{t("staff.title")}</h1>
 
       {!code && (
